@@ -11,6 +11,7 @@ type Params = {
   includeAbfahrt: boolean
   arbeitszeitRange: string
   abfahrtRange?: string
+  ankunftRange?: string
   stundensatzText: string
   employeeCount: number
   netto: number
@@ -34,6 +35,7 @@ export function usePdfDownload({
   date,
   auftragsnummer,
   includeAbfahrt,
+  ankunftRange,
   arbeitszeitRange,
   abfahrtRange,
   stundensatzText,
@@ -62,6 +64,8 @@ export function usePdfDownload({
       <ServiceReportPdf
         arbeitsdatum={date}
         auftragsnummer={auftragsnummer}
+        ankunftRange={ankunftRange}
+        ankunftText={formatDuration(report.ankunftzeit)}
         arbeitszeitText={formatDuration(report.arbeitszeit)}
         arbeitszeitRange={arbeitszeitRange}
         abfahrtText={includeAbfahrt ? formatDuration(report.abfahrt) : undefined}

@@ -75,7 +75,7 @@ export function useTimeCalculation({
       report: {
         arbeitszeit,
         abfahrt: abfahrtZeit,
-        gesamtzeit: ankunftZeit + arbeitszeit + abfahrtZeit,
+       gesamtzeit: ankunftZeit + arbeitszeit + abfahrtZeit,
         ankunftzeit: ankunftZeit,
       } satisfies Report,
       error: "",

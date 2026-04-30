@@ -1,47 +1,50 @@
-"use client"
+"use client";
 
-import { LineItem } from "@/app/types/lineItem"
-import { Employee } from "../lib/employees"
-import { Customer } from "@/app/types/customer"
+import { LineItem } from "@/app/types/lineItem";
+import { Employee } from "../lib/employees";
+import { Customer } from "@/app/types/customer";
 
 type ServiceReportProps = {
-  arbeitsdatum: string
-  auftragsnummer: string
-  kundenNr?: string
+  arbeitsdatum: string;
+  auftragsnummer: string;
+  kundenNr?: string;
 
-  arbeitszeitText: string
-  arbeitszeitRange: string
+  arbeitszeitText: string;
+  arbeitszeitRange: string;
 
-  abfahrtText?: string
-  abfahrtRange?: string
+  abfahrtText?: string;
+  abfahrtRange?: string;
 
-  gesamtzeitText: string
+  ankunftText?: string;
+  ankunftRange?: string;
 
-  stundensatz: string
-  mitarbeiterAnzahl: number
+  gesamtzeitText: string;
 
-  netto: string
-  mwst: string
-  brutto: string
+  stundensatz: string;
+  mitarbeiterAnzahl: number;
 
-  employees: Employee[]
-  customer?: Customer | null
+  netto: string;
+  mwst: string;
+  brutto: string;
 
-  onBack?: () => void
-  showBackButton?: boolean
+  employees: Employee[];
+  customer?: Customer | null;
 
-  signatureKunde: string | null
-  signatureEmployee: string | null
+  onBack?: () => void;
+  showBackButton?: boolean;
 
-  orderDetails?: string
+  signatureKunde: string | null;
+  signatureEmployee: string | null;
 
-  lineItems?: LineItem[]
-  extraBrutto?: string
+  orderDetails?: string;
 
-
-}
+  lineItems?: LineItem[];
+  extraBrutto?: string;
+};
 
 export default function ServiceReport({
+  ankunftText,
+  ankunftRange,
   abfahrtRange,
   arbeitsdatum,
   arbeitszeitRange,
@@ -64,7 +67,6 @@ export default function ServiceReport({
   orderDetails,
   lineItems,
   extraBrutto,
-
 }: ServiceReportProps) {
   return (
     <div className="print-area max-w-[800px] mx-auto bg-white p-8 text-base text-gray-900 leading-relaxed">
@@ -102,9 +104,7 @@ export default function ServiceReport({
                   {customer.postalCode} {customer.city}
                 </div>
 
-                {customer.phone && (
-                  <div>Tel. {customer.phone}</div>
-                )}
+                {customer.phone && <div>Tel. {customer.phone}</div>}
                 {customer.mobilePhone && (
                   <div>Mobil: {customer.mobilePhone}</div>
                 )}
@@ -129,18 +129,36 @@ export default function ServiceReport({
 
       {/* TITLE — крупнее и жирнее */}
       <div className="mb-4 text-right text-sm leading-relaxed">
-          <strong className="text-lg font-bold block mb-1">Servicebericht</strong>
-          Arbeitsdatum: {arbeitsdatum}<br />
-          Auftragsnummer: {auftragsnummer}<br />
-          {kundenNr && <>Kunden Nr: {kundenNr}<br /></>}
+        <strong className="text-lg font-bold block mb-1">Servicebericht</strong>
+        Arbeitsdatum: {arbeitsdatum}
+        <br />
+        Auftragsnummer: {auftragsnummer}
+        <br />
+        {kundenNr && (
+          <>
+            Kunden Nr: {kundenNr}
+            <br />
+          </>
+        )}
       </div>
 
       {/* LEISTUNGEN */}
       <table className="w-full border border-gray-300 mb-6 text-sm">
         <tbody>
+          {ankunftText && ankunftRange && (
+            <tr className="border border-gray-300">
+              <td className="p-1">
+                Ankunft
+                <br />
+                <span className="text-xs text-gray-500">({ankunftRange})</span>
+              </td>
+              <td className="p-1 text-right">{ankunftText}</td>
+            </tr>
+          )}
           <tr className="border border-gray-300">
             <td className="p-1">
-              Arbeitszeit<br />
+              Arbeitszeit
+              <br />
               <span className="text-xs text-gray-500">
                 ({arbeitszeitRange})
               </span>
@@ -151,10 +169,9 @@ export default function ServiceReport({
           {abfahrtText && abfahrtRange && (
             <tr className="border border-gray-300">
               <td className="p-1">
-                Fahrzeit<br />
-                <span className="text-xs text-gray-500">
-                  ({abfahrtRange})
-                </span>
+                Abfahrt
+                <br />
+                <span className="text-xs text-gray-500">({abfahrtRange})</span>
               </td>
               <td className="p-1 text-right">{abfahrtText}</td>
             </tr>
@@ -187,7 +204,6 @@ export default function ServiceReport({
               ))}
             </>
           ) : null}
-
         </tbody>
       </table>
 
@@ -215,8 +231,12 @@ export default function ServiceReport({
 
       {orderDetails?.trim() ? (
         <div className="mt-4 rounded-lg border border-gray-300 bg-gray-50 p-4">
-          <div className="text-sm font-bold text-gray-800">Ausführung der Arbeiten</div>
-          <div className="mt-2 whitespace-pre-wrap text-base">{orderDetails}</div>
+          <div className="text-sm font-bold text-gray-800">
+            Ausführung der Arbeiten
+          </div>
+          <div className="mt-2 whitespace-pre-wrap text-base">
+            {orderDetails}
+          </div>
         </div>
       ) : null}
 
@@ -256,7 +276,9 @@ export default function ServiceReport({
             </div>
             <div className="border-b border-gray-500 h-2 mb-2" />
             <div className="font-medium">
-              {customer ? `${customer.firstName} ${customer.lastName}` : "Kunde"}
+              {customer
+                ? `${customer.firstName} ${customer.lastName}`
+                : "Kunde"}
             </div>
           </div>
         </div>
@@ -288,11 +310,13 @@ export default function ServiceReport({
           <div className="h-full">
             <div>Umsatzsteuer-ID: DE288598216</div>
             <div>Steuer-Nr.: 135 5247 4113</div>
-            <div className="whitespace-nowrap">IBAN: DE62 1001 1001 2623 2363 37</div>
+            <div className="whitespace-nowrap">
+              IBAN: DE62 1001 1001 2623 2363 37
+            </div>
             <div>BIC: NTSBDEB1XXX</div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

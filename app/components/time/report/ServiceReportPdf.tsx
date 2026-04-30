@@ -23,6 +23,9 @@ type Props = {
   abfahrtText?: string;
   abfahrtRange?: string;
 
+  ankunftText?: string;
+  ankunftRange?: string;
+
   gesamtzeitText: string;
 
   stundensatz: string;
@@ -335,6 +338,8 @@ export default function ServiceReportPdf(props: Props) {
     kundenNr,
     arbeitszeitText,
     arbeitszeitRange,
+    ankunftText,
+    ankunftRange,
     abfahrtText,
     abfahrtRange,
     gesamtzeitText,
@@ -415,6 +420,18 @@ export default function ServiceReportPdf(props: Props) {
 
         {/* TABLE */}
         <View style={styles.table}>
+          {ankunftText && ankunftRange && (
+            <View style={styles.tableRow}>
+              <View style={styles.tableCellLeft}>
+                <Text style={styles.ledgerText}>Ankunft</Text>
+                <Text style={styles.ledgerMuted}>({ankunftRange})</Text>
+              </View>
+              <View style={styles.tableCellRight}>
+                <Text style={styles.ledgerText}>{ankunftText}</Text>
+              </View>
+            </View>
+          )}
+
           <View style={styles.tableRow}>
             <View style={styles.tableCellLeft}>
               <Text style={styles.ledgerText}>Arbeitszeit</Text>
@@ -428,7 +445,7 @@ export default function ServiceReportPdf(props: Props) {
           {abfahrtText && abfahrtRange && (
             <View style={styles.tableRow}>
               <View style={styles.tableCellLeft}>
-                <Text style={styles.ledgerText}>Fahrzeit</Text>
+                <Text style={styles.ledgerText}>Abfahrt</Text>
                 <Text style={styles.ledgerMuted}>({abfahrtRange})</Text>
               </View>
               <View style={styles.tableCellRight}>

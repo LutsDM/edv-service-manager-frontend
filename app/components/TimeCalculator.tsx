@@ -483,6 +483,7 @@ export default function TimeCalculator() {
     date,
     auftragsnummer,
     includeAbfahrt,
+    ankunftRange,
     arbeitszeitRange,
     abfahrtRange,
     stundensatzText,
@@ -551,8 +552,8 @@ export default function TimeCalculator() {
   const hasOrderDetails = orderDetails.trim().length > 0;
 
   const orderDetailsButtonText = hasOrderDetails
-    ? "Auftragsdetails: hinzugefügt"
-    : "Auftragsdetails hinzufügen";
+    ? "Auftragsdetails/Servicedetails: hinzugefügt"
+    : "Auftragsdetails/Servicedetails hinzufügen";
 
   /* ==================================================================
    * RENDER
@@ -849,6 +850,8 @@ export default function TimeCalculator() {
                 includeAbfahrt ? formatDuration(report.abfahrt) : undefined
               }
               abfahrtRange={abfahrtRange}
+              ankunftText={formatDuration(report.ankunftzeit)}
+              ankunftRange={ankunftRange}
               gesamtzeitText={formatDuration(report.gesamtzeit)}
               stundensatz={stundensatzText}
               mitarbeiterAnzahl={employeeCount}
