@@ -32,6 +32,79 @@ type OrderFormPdfProps = {
   signatureEmployee: string | null;
 };
 
+const MAX_DETAILS_FIRST_PAGE_WEIGHT = 500;
+const MIN_DETAILS_SECOND_PAGE_WEIGHT = 100;
+
+function normalizeDetailsText(text: string) {
+  return text
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function getTextWeight(text: string) {
+  const emptyLinesCount = (text.match(/\n\s*\n/g) || []).length;
+  return text.length + emptyLinesCount * 80;
+}
+
+function splitDetailsByParagraphs(text: string | null) {
+  if (!text?.trim()) {
+    return {
+      firstPart: "",
+      secondPart: "",
+    };
+  }
+
+  const normalized = normalizeDetailsText(text);
+
+  if (getTextWeight(normalized) <= MAX_DETAILS_FIRST_PAGE_WEIGHT) {
+    return {
+      firstPart: normalized,
+      secondPart: "",
+    };
+  }
+
+  const paragraphs = normalized
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+
+  const first: string[] = [];
+  const second: string[] = [];
+
+  let currentWeight = 0;
+
+  for (const paragraph of paragraphs) {
+    const paragraphWeight = getTextWeight(paragraph);
+    const nextWeight = currentWeight + paragraphWeight + 80;
+
+    if (nextWeight <= MAX_DETAILS_FIRST_PAGE_WEIGHT || first.length === 0) {
+      first.push(paragraph);
+      currentWeight = nextWeight;
+    } else {
+      second.push(paragraph);
+    }
+  }
+
+  const secondText = second.join("\n\n");
+
+  if (
+    getTextWeight(secondText) < MIN_DETAILS_SECOND_PAGE_WEIGHT &&
+    first.length > 1
+  ) {
+    const movedParagraph = first.pop();
+
+    if (movedParagraph) {
+      second.unshift(movedParagraph);
+    }
+  }
+
+  return {
+    firstPart: first.join("\n\n"),
+    secondPart: second.join("\n\n"),
+  };
+}
+
 const styles = StyleSheet.create({
   page: {
     padding: 24,
@@ -76,10 +149,8 @@ const styles = StyleSheet.create({
   disclaimerTitle: { fontWeight: "bold", marginBottom: 2 },
   disclaimerIntro: { marginBottom: 2 },
   disclaimerItem: { marginBottom: 2 },
-  address: { fontSize: 10, lineHeight: 1.4 },
   customerBlock: { fontSize: 11, lineHeight: 1.4, marginTop: 12 },
   passwortBlock: { marginTop: 10, fontSize: 10, lineHeight: 1.35 },
-  logo: { width: 232, height: 100, objectFit: "contain" },
   titleBlock: { textAlign: "right", marginBottom: 16 },
   titleLeft: {
     flexDirection: "row",
@@ -132,8 +203,22 @@ const styles = StyleSheet.create({
   },
   orderDetailsTitle: { fontSize: 11, fontWeight: "bold", marginBottom: 8 },
   orderDetailsBody: { fontSize: 10, lineHeight: 1.4 },
+  continuationHint: {
+    marginTop: 8,
+    fontSize: 9,
+    color: "#666",
+    fontStyle: "italic",
+  },
   footerBlock: {
     marginTop: 18,
+  },
+  finalSection: {
+    marginTop: 14,
+  },
+  confirmationText: {
+    fontSize: 10,
+    lineHeight: 1.4,
+    marginBottom: 10,
   },
   signaturesRow: {
     flexDirection: "row",
@@ -143,7 +228,7 @@ const styles = StyleSheet.create({
   agbNotice: {
     fontSize: 11,
     lineHeight: 1.4,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   signatureBox: { width: "48%", textAlign: "center" },
   signatureImageWrapper: { height: 40, justifyContent: "flex-end" },
@@ -172,7 +257,6 @@ const styles = StyleSheet.create({
     lineHeight: 1.12,
     textAlign: "justify",
   },
-
   agbHeadingLine: {
     fontSize: 5,
     lineHeight: 1.12,
@@ -186,11 +270,9 @@ const styles = StyleSheet.create({
     columnGap: 10,
     alignItems: "flex-start",
   },
-
   agbColumn: {
     flex: 1,
   },
-
   agbSection: {
     marginBottom: 2,
   },
@@ -210,6 +292,7 @@ function OrderFormContactsFooter() {
           <Text style={styles.companyLine}>Franz-Boehm-Str. 3</Text>
           <Text style={styles.companyLine}>40789 Monheim</Text>
         </View>
+
         <View style={styles.headerBlock}>
           <Text style={styles.blockTitle}>Standort Bergisch Gladbach:</Text>
           <Text style={styles.companyLine}>EDV-SERVICE Samirae</Text>
@@ -217,6 +300,7 @@ function OrderFormContactsFooter() {
           <Text style={styles.companyLine}>Schloßstrasse 33</Text>
           <Text style={styles.companyLine}>51429 Bergisch Gladbach</Text>
         </View>
+
         <View style={styles.headerBlock}>
           <Text style={styles.companyLine}>Telefon: 02173 / 9939835</Text>
           <Text style={styles.companyLine}>Telefon: 02204 / 96 70 720</Text>
@@ -224,6 +308,7 @@ function OrderFormContactsFooter() {
           <Text style={styles.companyLine}>E-Mail: mail@edvsamirae.de</Text>
           <Text style={styles.companyLine}>Web: www.edvsamirae.de</Text>
         </View>
+
         <View style={[styles.headerBlock, styles.headerBlockWide]}>
           <Text style={styles.companyLine}>Umsatzsteuer-ID: DE288598216</Text>
           <Text style={styles.companyLine}>Steuer-Nr.: 135 5247 4113</Text>
@@ -231,6 +316,104 @@ function OrderFormContactsFooter() {
             IBAN: DE62 1001 1001 2623 2363 37
           </Text>
           <Text style={styles.companyLine}>BIC: NTSBDEB1XXX</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function FooterWithSignatures({
+  signatureEmployee,
+  signatureKunde,
+  employees,
+  customer,
+}: {
+  signatureEmployee: string | null;
+  signatureKunde: string | null;
+  employees: Employee[];
+  customer?: Customer | null;
+}) {
+  return (
+    <View style={styles.footerBlock} wrap={false}>
+      <View style={styles.disclaimerBlock}>
+        <Text style={styles.disclaimerTitle}>
+          Verbrauchererklärung über Beginn der Arbeiten vor Ablauf der
+          Widerrufsfrist
+        </Text>
+
+        <Text style={styles.disclaimerIntro}>
+          Hiermit bestätige ich (der Auftraggeber / Kunde):
+        </Text>
+
+        <Text style={styles.disclaimerItem}>
+          1. Dass ich darüber belehrt wurde, dass mir ein 14-tägiges
+          Widerrufsrecht zusteht. Eine entsprechende Widerrufsbelehrung und ein
+          Muster-Widerrufsformular wurden mir ausgehändigt.
+        </Text>
+
+        <Text style={styles.disclaimerItem}>
+          2. Dass ich ausdrücklich zustimme, dass die beauftragten Arbeiten vor
+          Ablauf der Widerrufsfrist beginnen.
+        </Text>
+
+        <Text style={styles.disclaimerItem}>
+          3. Dass ich darüber in Kenntnis gesetzt wurde, dass ich mein
+          Widerrufsrecht bei vollständiger Vertragserfüllung verliere.
+        </Text>
+
+        <Text>
+          4. Dass ich für den Fall, dass ich vor vollständiger Vertragserfüllung
+          den Vertrag widerrufe, für die bis zum Widerruf erbrachten Leistungen
+          einen Wertersatz zu leisten habe.
+        </Text>
+      </View>
+
+      <View style={styles.finalSection}>
+        <Text style={styles.agbNotice}>
+          Auftragserteilung. Es gelten unsere AGB siehe nächste Seite.
+        </Text>
+
+        <Text style={styles.confirmationText}>
+          Die oben aufgeführten Leistungen und Angaben wurden gelesen und
+          bestätigt.
+        </Text>
+
+        <View style={styles.signaturesRow}>
+          <View style={styles.signatureBox}>
+            <Text style={styles.bold}>Ausgeführt durch:</Text>
+
+            <View style={styles.signatureImageWrapper}>
+              {signatureEmployee ? (
+                <Image src={signatureEmployee} style={styles.signatureImage} />
+              ) : (
+                <Text style={styles.muted}>Bitte unterschreiben</Text>
+              )}
+            </View>
+
+            <View style={styles.signatureLine} />
+
+            <Text>{employees?.[0]?.name || "Mitarbeiter"}</Text>
+          </View>
+
+          <View style={styles.signatureBox}>
+            <Text style={styles.bold}>Kunde:</Text>
+
+            <View style={styles.signatureImageWrapper}>
+              {signatureKunde ? (
+                <Image src={signatureKunde} style={styles.signatureImage} />
+              ) : (
+                <Text style={styles.muted}>Bitte unterschreiben</Text>
+              )}
+            </View>
+
+            <View style={styles.signatureLine} />
+
+            <Text>
+              {customer
+                ? `${customer.firstName} ${customer.lastName}`
+                : "Kunde"}
+            </Text>
+          </View>
         </View>
       </View>
     </View>
@@ -246,13 +429,15 @@ export default function OrderFormPdf(props: OrderFormPdfProps) {
     mitarbeiterAnzahl,
     orderDetails,
     lineItems,
-    extraBrutto,
     employees,
     customer,
     auftragPasswort,
     signatureKunde,
     signatureEmployee,
   } = props;
+
+  const { firstPart: orderDetailsFirstPart, secondPart: orderDetailsSecondPart } =
+    splitDetailsByParagraphs(orderDetails);
 
   return (
     <Document>
@@ -263,24 +448,31 @@ export default function OrderFormPdf(props: OrderFormPdfProps) {
               {customer && (
                 <View style={styles.customerBlock}>
                   <Text style={styles.bold}>Kunde</Text>
+
                   {customer.type === "company" && customer.companyName && (
                     <Text>{customer.companyName}</Text>
                   )}
+
                   <Text>
                     {customer.firstName} {customer.lastName}
                   </Text>
+
                   <Text>
                     {customer.street} {customer.houseNumber}
                   </Text>
+
                   <Text>
                     {customer.postalCode} {customer.city}
                   </Text>
+
                   {customer.phone && <Text>Tel. {customer.phone}</Text>}
+
                   {customer.mobilePhone && (
                     <Text>Mobil: {customer.mobilePhone}</Text>
                   )}
                 </View>
               )}
+
               {auftragPasswort?.trim() ? (
                 <View style={styles.passwortBlock}>
                   <Text style={styles.bold}>Passwort</Text>
@@ -288,8 +480,10 @@ export default function OrderFormPdf(props: OrderFormPdfProps) {
                 </View>
               ) : null}
             </View>
+
             <View style={styles.titleLeft}>
               <Image src="/LOGO.png" style={styles.titleLogo} />
+
               <View style={styles.brandTextBlock}>
                 <Text style={[styles.brandService, styles.brandLine]}>
                   SERVICE
@@ -309,7 +503,6 @@ export default function OrderFormPdf(props: OrderFormPdfProps) {
           {kundenNr && <Text>Kunden Nr: {kundenNr}</Text>}
         </View>
 
-        {/* Таблица как в Servicebericht (без времени) */}
         <View style={styles.table}>
           <View style={styles.tableRow}>
             <Text style={styles.tableCellLeft}>Stundensatz</Text>
@@ -317,6 +510,7 @@ export default function OrderFormPdf(props: OrderFormPdfProps) {
               <Text>{preisProStunde}</Text>
             </View>
           </View>
+
           <View
             style={[
               styles.tableRow,
@@ -328,9 +522,11 @@ export default function OrderFormPdf(props: OrderFormPdfProps) {
               <Text>{mitarbeiterAnzahl}</Text>
             </View>
           </View>
+
           {lineItems?.length ? (
             <>
               <View style={{ height: 1, backgroundColor: "#999" }} />
+
               {lineItems.map((item, index) => (
                 <View
                   key={item.id}
@@ -353,82 +549,53 @@ export default function OrderFormPdf(props: OrderFormPdfProps) {
           ) : null}
         </View>
 
-        {orderDetails?.trim() ? (
+        {orderDetailsFirstPart ? (
           <View style={styles.orderDetailsBlock}>
             <Text style={styles.orderDetailsTitle}>Auftragsdetails</Text>
-            <Text style={styles.orderDetailsBody}>
-              {orderDetails.replace(/\r\n/g, "\n")}
-            </Text>
+            <Text style={styles.orderDetailsBody}>{orderDetailsFirstPart}</Text>
+
+            {orderDetailsSecondPart ? (
+              <Text style={styles.continuationHint}>
+                Fortsetzung auf der nächsten Seite.
+              </Text>
+            ) : null}
           </View>
         ) : null}
 
-        <View style={styles.footerBlock} wrap={false}>
-          <View style={styles.disclaimerBlock}>
-            <Text style={styles.disclaimerTitle}>
-              Verbrauchererklärung über Beginn der Arbeiten vor Ablauf der
-              Widerrufsfrist
-            </Text>
-            <Text style={styles.disclaimerIntro}>
-              Hiermit bestätige ich (der Auftraggeber / Kunde):
-            </Text>
-            <Text style={styles.disclaimerItem}>
-              1. Dass ich darüber belehrt wurde, dass mir ein 14-tägiges
-              Widerrufsrecht zusteht. Eine entsprechende Widerrufsbelehrung und
-              ein Muster-Widerrufsformular wurden mir ausgehändigt.
-            </Text>
-            <Text style={styles.disclaimerItem}>
-              2. Dass ich ausdrücklich zustimme, dass die beauftragten Arbeiten
-              vor Ablauf der Widerrufsfrist beginnen.
-            </Text>
-            <Text style={styles.disclaimerItem}>
-              3. Dass ich darüber in Kenntnis gesetzt wurde, dass ich mein
-              Widerrufsrecht bei vollständiger Vertragserfüllung verliere.
-            </Text>
-            <Text>
-              4. Dass ich für den Fall, dass ich vor vollständiger
-              Vertragserfüllung den Vertrag widerrufe, für die bis zum Widerruf
-              erbrachten Leistungen einen Wertersatz zu leisten habe.
-            </Text>
-          </View>
-          <Text style={styles.agbNotice}>
-            Auftragserteilung. Es gelten unsere AGB siehe nächste Seite.
-          </Text>
-          <View style={styles.signaturesRow}>
-            <View style={styles.signatureBox}>
-              <Text style={styles.bold}>Ausgeführt durch:</Text>
-              <View style={styles.signatureImageWrapper}>
-                {signatureEmployee ? (
-                  <Image
-                    src={signatureEmployee}
-                    style={styles.signatureImage}
-                  />
-                ) : (
-                  <Text style={styles.muted}>Bitte unterschreiben</Text>
-                )}
-              </View>
-              <View style={styles.signatureLine} />
-              <Text>{employees?.[0]?.name || "Mitarbeiter"}</Text>
-            </View>
-            <View style={styles.signatureBox}>
-              <Text style={styles.bold}>Kunde:</Text>
-              <View style={styles.signatureImageWrapper}>
-                {signatureKunde ? (
-                  <Image src={signatureKunde} style={styles.signatureImage} />
-                ) : (
-                  <Text style={styles.muted}>Bitte unterschreiben</Text>
-                )}
-              </View>
-              <View style={styles.signatureLine} />
-              <Text>
-                {customer
-                  ? `${customer.firstName} ${customer.lastName}`
-                  : "Kunde"}
-              </Text>
-            </View>
-          </View>
-        </View>
+        {!orderDetailsSecondPart ? (
+          <FooterWithSignatures
+            signatureEmployee={signatureEmployee}
+            signatureKunde={signatureKunde}
+            employees={employees}
+            customer={customer}
+          />
+        ) : null}
+
         <OrderFormContactsFooter />
       </Page>
+
+      {orderDetailsSecondPart ? (
+        <Page size="A4" style={styles.page}>
+          <View style={styles.orderDetailsBlock}>
+            <Text style={styles.orderDetailsTitle}>
+              Auftragsdetails Fortsetzung
+            </Text>
+
+            <Text style={styles.orderDetailsBody}>
+              {orderDetailsSecondPart}
+            </Text>
+          </View>
+
+          <FooterWithSignatures
+            signatureEmployee={signatureEmployee}
+            signatureKunde={signatureKunde}
+            employees={employees}
+            customer={customer}
+          />
+
+          <OrderFormContactsFooter />
+        </Page>
+      ) : null}
 
       <Page size="A4" style={styles.agbPage}>
         <Text style={styles.agbDocumentTitle}>{ORDER_FORM_AGB_TITLE}</Text>
@@ -448,7 +615,6 @@ export default function OrderFormPdf(props: OrderFormPdfProps) {
                       style={line.bold ? styles.agbHeadingLine : styles.agbBody}
                     >
                       {line.text}
-                      
                     </Text>
                   ),
                 )}
