@@ -30,10 +30,11 @@ import { useTimeRanges } from "./time/hooks/useTimeRange";
  * ------------------------------------------------------------------ */
 import HeaderBlock from "./time/blocks/HeaderBlock";
 import EmployeesBlock from "./time/blocks/EmployeesBlock";
-import TravelTimeBlock from "./time/blocks/TravelTimeBlock";
 import ArbeitszeitBlock from "./time/blocks/ArbeitszeitBlock";
 import ReportSummaryBlock from "./time/blocks/ReportSummaryBlock";
 import ActionsBlock from "./time/blocks/ActionsBlock";
+import AnkunftTimeBlock from "./time/blocks/AnkunftTimeBlock";
+import AbfahrtTimeBlock from "./time/blocks/AbfahrtTimeBlock";
 
 /* ------------------------------------------------------------------
  * Print / Preview
@@ -54,6 +55,7 @@ import OrderDetailsModal from "./time/blocks/OrderDetailsModal";
 import LineItemsModal from "./time/blocks/LineItemsModal";
 import { LineItem } from "../types/lineItem";
 import { clampOrderDetails } from "./time/lib/orderDetailsLimits";
+
 
 export default function TimeCalculator() {
   /* ------------------------------------------------------------------
@@ -95,6 +97,7 @@ export default function TimeCalculator() {
   const [ankunftVon, setAnkunftVon] = useState<TimeParts>(getNowTime);
   const [ankunftBis, setAnkunftBis] = useState<TimeParts>(getNowTime);
   const [includeAbfahrt, setIncludeAbfahrt] = useState(false);
+  const [includeAnkunft, setIncludeAnkuft] = useState(false);
 
   const [abfahrtVon, setAbfahrtVon] = useState<TimeParts>(emptyTime);
   const [abfahrtBis, setAbfahrtBis] = useState<TimeParts>(emptyTime);
@@ -206,6 +209,7 @@ export default function TimeCalculator() {
         ankunftVon,
         ankunftBis,
         includeAbfahrt,
+        includeAnkunft,
         abfahrtVon,
         abfahrtBis,
         selectedEmployees,
@@ -223,6 +227,7 @@ export default function TimeCalculator() {
       ankunftVon,
       ankunftBis,
       includeAbfahrt,
+      includeAnkunft,
       abfahrtVon,
       abfahrtBis,
       selectedEmployees,
@@ -256,6 +261,7 @@ export default function TimeCalculator() {
       ankunftVon,
       ankunftBis,
       includeAbfahrt,
+      includeAnkunft,
       abfahrtVon,
       abfahrtBis,
       selectedEmployees,
@@ -274,6 +280,7 @@ export default function TimeCalculator() {
       ankunftVon,
       ankunftBis,
       includeAbfahrt,
+      includeAnkunft,
       abfahrtVon,
       abfahrtBis,
       selectedEmployees,
@@ -318,6 +325,9 @@ export default function TimeCalculator() {
       if (typeof parsed.includeAbfahrt === "boolean") {
         setIncludeAbfahrt(parsed.includeAbfahrt);
       }
+      if (typeof parsed.includeAnkunft === "boolean") {
+        setIncludeAnkuft(parsed.includeAnkunft);
+      }
 
       if (parsed.abfahrtVon) setAbfahrtVon(parsed.abfahrtVon);
       if (parsed.abfahrtBis) setAbfahrtBis(parsed.abfahrtBis);
@@ -341,18 +351,29 @@ export default function TimeCalculator() {
       }
       if (Array.isArray(parsed.lineItems)) {
         setLineItems(
-          (
-            parsed.lineItems as unknown[]
-          )
-            .filter((x): x is { id?: unknown; title: string; amountCents?: unknown } => {
-              if (!x || typeof x !== "object") return false;
-              const obj = x as { id?: unknown; title?: unknown; amountCents?: unknown };
-              return typeof obj.title === "string";
-            })
+          (parsed.lineItems as unknown[])
+            .filter(
+              (
+                x,
+              ): x is {
+                id?: unknown;
+                title: string;
+                amountCents?: unknown;
+              } => {
+                if (!x || typeof x !== "object") return false;
+                const obj = x as {
+                  id?: unknown;
+                  title?: unknown;
+                  amountCents?: unknown;
+                };
+                return typeof obj.title === "string";
+              },
+            )
             .map((x) => ({
               id: typeof x.id === "string" ? x.id : crypto.randomUUID(),
               title: x.title,
-              amountCents: typeof x.amountCents === "number" ? x.amountCents : 0,
+              amountCents:
+                typeof x.amountCents === "number" ? x.amountCents : 0,
             })),
         );
       } else {
@@ -411,6 +432,7 @@ export default function TimeCalculator() {
     setAnkunftBis(getNowTime());
 
     setIncludeAbfahrt(false);
+    setIncludeAnkuft(false);
     setAbfahrtVon(emptyTime);
     setAbfahrtBis(emptyTime);
 
@@ -448,6 +470,7 @@ export default function TimeCalculator() {
     abfahrtVon,
     abfahrtBis,
     includeAbfahrt,
+    includeAnkunft,
   });
 
   /* ------------------------------------------------------------------
@@ -473,6 +496,7 @@ export default function TimeCalculator() {
     abfahrtVon,
     abfahrtBis,
     includeAbfahrt,
+    includeAnkunft,
   });
 
   /* ------------------------------------------------------------------
@@ -483,6 +507,7 @@ export default function TimeCalculator() {
     date,
     auftragsnummer,
     includeAbfahrt,
+    includeAnkunft,
     ankunftRange,
     arbeitszeitRange,
     abfahrtRange,
@@ -589,9 +614,9 @@ export default function TimeCalculator() {
       w-full rounded-lg py-2 text-sm font-medium border
       transition-colors flex items-center justify-center gap-2
       ${
-      hasCustomer
-        ? "bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700"
-        : "bg-gray-100 text-gray-900 border-gray-300 hover:bg-gray-200"
+        hasCustomer
+          ? "bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700"
+          : "bg-gray-100 text-gray-900 border-gray-300 hover:bg-gray-200"
       }
       active:scale-[0.98]
       `}
@@ -599,7 +624,7 @@ export default function TimeCalculator() {
             {hasCustomer && <span className="text-base leading-none">✔</span>}
             <span className="truncate max-w-[85%]">{customerButtonText}</span>
           </button>
-      
+
           {isCustomerModalOpen && (
             <CustomerModal
               initialValue={customer}
@@ -637,7 +662,7 @@ export default function TimeCalculator() {
               onClose={() => setOrderDetailsModalOpen(false)}
             />
           )}
-          
+
           {/* Passwort — nur Auftragsformular */}
           <button
             type="button"
@@ -646,9 +671,9 @@ export default function TimeCalculator() {
       w-full rounded-lg py-2 text-sm font-medium border
       transition-colors flex items-center justify-center gap-2
       ${
-      hasPasswort
-        ? "bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700"
-        : "bg-gray-100 text-gray-900 border-gray-300 hover:bg-gray-200"
+        hasPasswort
+          ? "bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700"
+          : "bg-gray-100 text-gray-900 border-gray-300 hover:bg-gray-200"
       }
       active:scale-[0.98]
       `}
@@ -656,7 +681,7 @@ export default function TimeCalculator() {
             {hasPasswort && <span className="text-base leading-none">✔</span>}
             <span className="truncate max-w-[85%]">{passwortButtonText}</span>
           </button>
-      
+
           {isPasswordModalOpen && (
             <PasswordModal
               initialValue={auftragPasswort}
@@ -691,8 +716,6 @@ export default function TimeCalculator() {
             />
           )}
 
-
-
           {/* Employees selection */}
           <EmployeesBlock
             selectedEmployees={selectedEmployees}
@@ -712,12 +735,19 @@ export default function TimeCalculator() {
             onRemoveEmployee={removeEmployee}
           />
 
-          {/* Working time */}
-          <ArbeitszeitBlock
+          {/* Ankunft Travel time */}
+          <AnkunftTimeBlock
+            includeAnkunft={includeAnkunft}
+            onToggleIncludeAnkunft={setIncludeAnkuft}
             ankunftVon={ankunftVon}
             ankunftBis={ankunftBis}
             onAnkunftVonChange={setAnkunftVon}
             onAnkunftBisChange={setAnkunftBis}
+            timeOptions={timeOptions}
+          />
+
+          {/* Working time */}
+          <ArbeitszeitBlock
             start={start}
             end={end}
             onStartChange={setStart}
@@ -725,8 +755,8 @@ export default function TimeCalculator() {
             timeOptions={timeOptions}
           />
 
-          {/* Travel time */}
-          <TravelTimeBlock
+          {/* Abfahrt Travel time */}
+          <AbfahrtTimeBlock
             includeAbfahrt={includeAbfahrt}
             onToggleIncludeAbfahrt={setIncludeAbfahrt}
             abfahrtVon={abfahrtVon}
@@ -748,6 +778,7 @@ export default function TimeCalculator() {
             <ReportSummaryBlock
               report={report}
               includeAbfahrt={includeAbfahrt}
+              includeAnkunft={includeAnkunft}
               employeeCount={employeeCount}
               serviceBrutto={serviceBrutto}
             />
@@ -850,7 +881,9 @@ export default function TimeCalculator() {
                 includeAbfahrt ? formatDuration(report.abfahrt) : undefined
               }
               abfahrtRange={abfahrtRange}
-              ankunftText={formatDuration(report.ankunftzeit)}
+              ankunftText={
+                includeAnkunft ? formatDuration(report.ankunftzeit) : undefined
+              }
               ankunftRange={ankunftRange}
               gesamtzeitText={formatDuration(report.gesamtzeit)}
               stundensatz={stundensatzText}
