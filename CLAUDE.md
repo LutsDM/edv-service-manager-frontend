@@ -1,74 +1,146 @@
-# CLAUDE.md — EDV Time Calculator
+# CLAUDE.md — EDV Service Manager
 
-## Проект
+## Project Overview
 
-Внутренний инструмент создания заявок на выполнение работ и отчетов выполненных работ.  
-Деплой: https://lutsdm.github.io/rechner/
+Internal EDV service management system for creating:
 
----
+- Auftragsformular (work order form)
+- Servicebericht (service report)
 
-## Технологии
+The application is designed to automate work tracking, reporting, PDF generation, and service documentation for a computer repair and IT service company.
 
-- **Next.js** (App Router)
-- **TypeScript**
-- **Tailwind CSS**
-- **React hooks** — логика вынесена в `hooks/`
-- PDF-генерация — см. `report/`
+Deployment:
+https://lutsdm.github.io/rechner/
 
 ---
 
-## Команды
+# Frontend Architecture
+
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- React Hooks based architecture
+- PDF generation handled inside `report/`
+- Mobile-first UI design
+
+## Frontend Rules
+
+- Business logic must live inside `hooks/`
+- UI components should remain presentation-only
+- Prefer reusable blocks and modular structure
+- Tailwind CSS preferred over custom CSS
+- Avoid unnecessary re-renders
+- Use dynamic imports for heavy PDF modules
+
+---
+
+# Backend Architecture
+
+- Spring Boot REST API
+- PostgreSQL as primary database
+- Flyway migrations required
+- Layered architecture:
+
+```text
+Controller -> Service -> Repository
+```
+
+- DTO pattern mandatory
+- No direct entity exposure
+- JWT authentication planned
+- JSON-based report persistence planned
+
+---
+
+# Current Development Goals
+
+Current project priorities:
+
+1. Introduce PostgreSQL persistence
+2. Replace localStorage drafts with backend storage
+3. Implement Customer CRUD
+4. Implement Auftragsformular CRUD
+5. Implement Servicebericht CRUD
+6. Generate PDFs from database entities
+7. Add authentication system
+8. Build admin/report history system
+
+---
+
+# AI Restrictions
+
+- Do not rewrite existing architecture
+- Do not introduce new libraries without reason
+- Do not move files automatically
+- Preserve current naming conventions
+- Preserve German business terminology
+- Prefer extending existing hooks over creating duplicates
+- Avoid unnecessary abstractions
+- Minimize file changes
+- Preserve PDF generation behavior unless explicitly requested
+
+---
+
+# Commands
 
 ```bash
-npm run dev       # локальный дев-сервер
-npm run build     # production-сборка
-npm run lint      # ESLint проверка
+npm run dev       # local development server
+npm run build     # production build
+npm run lint      # ESLint validation
 ```
 
 ---
 
-## Структура проекта
+# Project Structure
 
-```
+```text
 app/
   components/
     time/
-      blocks/           # крупные блоки UI (один блок = одна секция формы)
-        ActionsBlock        # кнопки действий
-        ArbeitszeitBlock    # рабочее время (Von / Bis)
-        CustomerModal       # данные клиента
-        EmployeesBlock      # выбор сотрудников
-        HeaderBlock         # шапка
-        LineItemsModal      # позиции заказа
-        OrderDetailsBlock   # детали заказа
-        OrderDetailsModal   # модалка деталей
-        PasswordModal       # защита паролем
-        ReportSummaryBlock  # итоговый отчёт
-        TravelTimeBlock     # время в дороге (Abfahrt / Ankunft)
-      hooks/            # вся бизнес-логика — только здесь
+      blocks/           # Large UI sections (one block = one form section)
+        ActionsBlock        # Action buttons
+        ArbeitszeitBlock    # Working time (Von / Bis)
+        CustomerModal       # Customer information
+        EmployeesBlock      # Employee selection
+        HeaderBlock         # Header section
+        LineItemsModal      # Additional order positions
+        OrderDetailsBlock   # Order details
+        OrderDetailsModal   # Order details modal
+        PasswordModal       # Password protection
+        ReportSummaryBlock  # Final report summary
+        TravelTimeBlock     # Travel time (Abfahrt / Ankunft)
+
+      hooks/            # All business logic lives here
         useEmployeesSelection
         useOrderFormPdfDownload
         usePdfDownload
-        usePriceCalculation   # расчёт стоимости
-        useTimeCalculation    # расчёт времени
+        usePriceCalculation
+        useTimeCalculation
         useTimeRange
-      lib/              # вспомогательные утилиты
-      report/           # генерация PDF и отчётов
+
+      lib/              # Utility helpers
+
+      report/           # PDF generation and reports
         DocumentPreview
         orderFormAgbContent
         OrderFormPdf
         OrderFormReport
         ServiceReport
         ServiceReportPdf
-      Signature/        # подпись клиента
+
+      Signature/        # Signature system
         SignatureModal
         SignaturePad
-      ui/               # мелкие переиспользуемые компоненты
+
+      ui/               # Small reusable UI components
         ReportRow
         TimeBlock
         TimeRow
-      TimeCalculator.tsx  # корневой компонент
-  types/                # TypeScript типы
+
+      TimeCalculator.tsx  # Root component
+
+  types/                # Centralized TypeScript types
+
   globals.css
   layout.tsx
   page.tsx
@@ -76,52 +148,71 @@ app/
 
 ---
 
-## Архитектурные правила
+# Architecture Rules
 
-- **Вся бизнес-логика — только в `hooks/`**, не в компонентах
-- **Компоненты** — только отображение и вызов хуков
-- **`blocks/`** — крупные секции формы, каждый отвечает за свою область
-- **`ui/`** — мелкие переиспользуемые элементы без логики
-- **`report/`** — не трогать без явной задачи на PDF/отчёты
-- **`types/`** — все TypeScript интерфейсы и типы централизованно
+- All business logic must remain inside `hooks/`
+- Components should only handle rendering and hook usage
+- `blocks/` represent isolated form sections
+- `ui/` contains reusable presentational components only
+- `report/` should not be modified without explicit PDF/report tasks
+- All TypeScript interfaces and types must remain centralized in `types/`
 
 ---
 
-## Бизнес-логика (не нарушать!)
+# Core Business Logic (Do Not Break)
 
-### Расчёт оплаты (`usePriceCalculation`)
-- Единый почасовой тариф для рабочего времени и времени в дороге
-- Расчёт **поминутный**, без округления промежуточных значений
-- Формула: `(рабочие минуты + минуты в дороге) × (тариф / 60)`
-- Округление **только итоговой суммы** до 2 знаков
+## Price Calculation (`usePriceCalculation`)
 
-### Валидация времени (`useTimeCalculation`, `useTimeRange`)
-- Начало работы < Конец работы
-- Отправление ≤ Прибытие
-- Начало работы не раньше Прибытия
-- Отправление не позже Конца работы
-- Поездка **опциональна** — валидировать только если поля заполнены
+- Single hourly rate for both work time and travel time
+- Minute-precise calculation without intermediate rounding
+- Formula:
 
-### UI
-- Секунды не отображаются (только часы:минуты)
-- Одна дата на весь рабочий день
+```text
+(work minutes + travel minutes) × (hourly rate / 60)
+```
+
+- Only the final result may be rounded to 2 decimal places
+
+---
+
+## Time Validation (`useTimeCalculation`, `useTimeRange`)
+
+Validation rules:
+
+- Work start < Work end
+- Departure ≤ Arrival
+- Work start must not be earlier than Arrival
+- Departure must not be later than Work end
+- Travel time is optional and validated only if fields are filled
+
+---
+
+## UI Rules
+
+- Seconds must never be displayed
+- Single date per working day
 - Mobile-first layout
+- Preserve existing German UI terminology
 
 ---
 
-## Требования к коду
+# Code Requirements
 
-- **TypeScript строго** — без `any`, типы в `types/`
-- **Минимальные изменения** — трогай только то, что нужно для задачи
-- **Без side effects** — изменение одного блока не ломает другие
-- Tailwind-классы предпочтительнее кастомного CSS
-- Немецкий язык в UI — существующие тексты не менять без задачи
+- Strict TypeScript only
+- No `any`
+- All shared types belong in `types/`
+- Avoid side effects between blocks
+- Keep changes minimal and isolated
+- Preserve existing architecture whenever possible
+- Prefer extending existing functionality over rewriting
 
 ---
 
-## Частые ошибки (дополняй по мере работы)
+# Common Mistakes
 
-- Не округлять промежуточные минуты — только итог
-- Валидацию поездки проверять только если поля заполнены
-- Логику не писать внутри компонентов — выносить в хуки
-- При изменении типов — проверить все места использования через TypeScript
+- Never round intermediate minute calculations
+- Travel validation must only run if travel fields exist
+- Do not place business logic inside components
+- After changing TypeScript types, verify all usages
+- Avoid duplicating hooks with overlapping responsibilities
+```
