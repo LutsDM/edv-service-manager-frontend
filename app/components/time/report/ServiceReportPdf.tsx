@@ -329,6 +329,14 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontWeight: "bold",
   },
+  
+  continuationHint: {
+    marginTop: 8,
+    fontSize: 9,
+    color: "#666",
+    fontStyle: "italic",
+  },
+
 });
 
 export default function ServiceReportPdf(props: Props) {
@@ -565,6 +573,13 @@ export default function ServiceReportPdf(props: Props) {
             <Text style={styles.orderDetailsBody}>{orderDetailsFirstPart}</Text>
           </View>
         ) : null}
+
+{orderDetailsSecondPart ? (
+              <Text style={styles.continuationHint}>
+                Fortsetzung auf der nächsten Seite.
+              </Text>
+            ) : null}
+      
 
         {/* ORDER DETAILS (continued on next page to avoid signatures alone) */}
         {orderDetailsSecondPart ? (

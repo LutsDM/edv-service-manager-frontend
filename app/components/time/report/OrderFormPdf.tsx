@@ -553,15 +553,14 @@ export default function OrderFormPdf(props: OrderFormPdfProps) {
           <View style={styles.orderDetailsBlock}>
             <Text style={styles.orderDetailsTitle}>Auftragsdetails</Text>
             <Text style={styles.orderDetailsBody}>{orderDetailsFirstPart}</Text>
-
-            {orderDetailsSecondPart ? (
-              <Text style={styles.continuationHint}>
-                Fortsetzung auf der nächsten Seite.
-              </Text>
-            ) : null}
           </View>
         ) : null}
 
+        {orderDetailsSecondPart ? (
+          <Text style={styles.continuationHint}>
+            Fortsetzung auf der nächsten Seite.
+          </Text>
+        ) : null}
         {!orderDetailsSecondPart ? (
           <FooterWithSignatures
             signatureEmployee={signatureEmployee}
