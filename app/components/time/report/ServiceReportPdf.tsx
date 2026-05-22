@@ -49,40 +49,76 @@ type Props = {
   serviceBrutto?: string;
 };
 
-const ORDER_DETAILS_FIRST_PAGE_TARGET_CHARS = 600;
-const ORDER_DETAILS_MIN_KEEP_ON_FIRST_PAGE = 450;
+const MAX_DETAILS_FIRST_PAGE_WEIGHT = 500;
+const MIN_DETAILS_SECOND_PAGE_WEIGHT = 100;
 
-function splitOrderDetailsForPdf(orderDetails: string | null): {
-  firstPart: string | null;
-  secondPart: string | null;
-} {
-  const normalized = orderDetails?.replace(/\r\n/g, "\n").trim() ?? "";
-  if (!normalized) {
-    return { firstPart: null, secondPart: null };
+function normalizeDetailsText(text: string) {
+  return text
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function getTextWeight(text: string) {
+  const emptyLinesCount = (text.match(/\n\s*\n/g) || []).length;
+  return text.length + emptyLinesCount * 80;
+}
+
+function splitDetailsByParagraphs(text: string | null) {
+  if (!text?.trim()) {
+    return {
+      firstPart: "",
+      secondPart: "",
+    };
   }
 
-  if (normalized.length <= ORDER_DETAILS_FIRST_PAGE_TARGET_CHARS) {
-    return { firstPart: normalized, secondPart: null };
+  const normalized = normalizeDetailsText(text);
+
+  if (getTextWeight(normalized) <= MAX_DETAILS_FIRST_PAGE_WEIGHT) {
+    return {
+      firstPart: normalized,
+      secondPart: "",
+    };
   }
 
-  const splitAtNewline = normalized.lastIndexOf(
-    "\n",
-    ORDER_DETAILS_FIRST_PAGE_TARGET_CHARS,
-  );
-  const splitAtSpace = normalized.lastIndexOf(
-    " ",
-    ORDER_DETAILS_FIRST_PAGE_TARGET_CHARS,
-  );
-  const candidateSplit = Math.max(splitAtNewline, splitAtSpace);
+  const paragraphs = normalized
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
 
-  const splitIndex =
-    candidateSplit >= ORDER_DETAILS_MIN_KEEP_ON_FIRST_PAGE
-      ? candidateSplit
-      : ORDER_DETAILS_FIRST_PAGE_TARGET_CHARS;
+  const first: string[] = [];
+  const second: string[] = [];
+
+  let currentWeight = 0;
+
+  for (const paragraph of paragraphs) {
+    const paragraphWeight = getTextWeight(paragraph);
+    const nextWeight = currentWeight + paragraphWeight + 80;
+
+    if (nextWeight <= MAX_DETAILS_FIRST_PAGE_WEIGHT || first.length === 0) {
+      first.push(paragraph);
+      currentWeight = nextWeight;
+    } else {
+      second.push(paragraph);
+    }
+  }
+
+  const secondText = second.join("\n\n");
+
+  if (
+    getTextWeight(secondText) < MIN_DETAILS_SECOND_PAGE_WEIGHT &&
+    first.length > 1
+  ) {
+    const movedParagraph = first.pop();
+
+    if (movedParagraph) {
+      second.unshift(movedParagraph);
+    }
+  }
 
   return {
-    firstPart: normalized.slice(0, splitIndex).trim(),
-    secondPart: normalized.slice(splitIndex).trim(),
+    firstPart: first.join("\n\n"),
+    secondPart: second.join("\n\n"),
   };
 }
 
@@ -138,21 +174,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  address: {
-    fontSize: 10,
-    lineHeight: 1.4,
-  },
-
   customerBlock: {
     fontSize: 11,
     lineHeight: 1.4,
     marginTop: 12,
-  },
-
-  logo: {
-    width: 232,
-    height: 100,
-    objectFit: "contain",
   },
 
   titleBlock: {
@@ -203,23 +228,19 @@ const styles = StyleSheet.create({
     borderColor: "#999",
     marginBottom: 14,
   },
-
   tableRow: {
     flexDirection: "row",
     alignItems: "center",
     borderBottomWidth: 1,
     borderBottomColor: "#999",
   },
-
   tableRowNoBottom: {
     borderBottomWidth: 0,
   },
-
   tableCellLeft: {
     flex: 1,
     padding: 4,
   },
-
   tableCellRight: {
     width: 110,
     padding: 4,
@@ -230,21 +251,16 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#666",
   },
-
-  /** Table + totals: one step smaller than page (11 → 10) */
   ledgerText: {
     fontSize: 9,
   },
-
   ledgerMuted: {
     fontSize: 8,
     color: "#666",
   },
-
   bold: {
     fontWeight: "bold",
   },
-
   divider: {
     height: 1,
     backgroundColor: "#999",
@@ -255,16 +271,21 @@ const styles = StyleSheet.create({
     marginLeft: "auto",
     marginBottom: 14,
   },
-
   totalsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 3,
   },
-
   totalsSum: {
     borderTopWidth: 1,
     borderTopColor: "#000",
+    paddingTop: 6,
+    marginTop: 6,
+    fontWeight: "bold",
+  },
+  totalsSubsum: {
+    borderTopWidth: 1,
+    borderTopColor: "#999",
     paddingTop: 6,
     marginTop: 6,
     fontWeight: "bold",
@@ -280,16 +301,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 1.4,
   },
-
   orderDetailsTitle: {
     fontSize: 11,
     fontWeight: "bold",
     marginBottom: 8,
   },
-
   orderDetailsBody: {
     fontSize: 10,
     lineHeight: 1.4,
+  },
+  continuationHint: {
+    marginTop: 8,
+    fontSize: 9,
+    color: "#666",
+    fontStyle: "italic",
   },
 
   footerSignatures: {
@@ -298,46 +323,112 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "flex-start",
   },
-
   signatureBox: {
     width: "48%",
     textAlign: "center",
   },
-
   signatureImageWrapper: {
     height: 40,
     justifyContent: "flex-end",
   },
-
   signatureImage: {
     width: "100%",
     height: "100%",
     objectFit: "contain",
   },
-
   signatureLine: {
     borderBottomWidth: 1,
     borderBottomColor: "#555",
     marginTop: 4,
     marginBottom: 6,
   },
-
-  totalsSubsum: {
-    borderTopWidth: 1,
-    borderTopColor: "#999",
-    paddingTop: 6,
-    marginTop: 6,
-    fontWeight: "bold",
-  },
-  
-  continuationHint: {
-    marginTop: 8,
-    fontSize: 9,
-    color: "#666",
-    fontStyle: "italic",
-  },
-
 });
+
+function ContactsFooter() {
+  return (
+    <View style={styles.contactsFooter} fixed>
+      <View style={styles.headerDivider} />
+      <View style={[styles.headerBlocksRow, styles.contactsContent]}>
+        <View style={styles.headerBlock}>
+          <Text style={styles.blockTitle}>Standort Monheim:</Text>
+          <Text style={styles.companyLine}>EDV-SERVICE Samirae</Text>
+          <Text style={styles.companyLine}>Frank Samirae</Text>
+          <Text style={styles.companyLine}>Franz-Boehm-Str. 3</Text>
+          <Text style={styles.companyLine}>40789 Monheim</Text>
+        </View>
+
+        <View style={styles.headerBlock}>
+          <Text style={styles.blockTitle}>Standort Bergisch Gladbach:</Text>
+          <Text style={styles.companyLine}>EDV-SERVICE Samirae</Text>
+          <Text style={styles.companyLine}>Frank Samirae</Text>
+          <Text style={styles.companyLine}>Schloßstrasse 33</Text>
+          <Text style={styles.companyLine}>51429 Bergisch Gladbach</Text>
+        </View>
+
+        <View style={styles.headerBlock}>
+          <Text style={styles.companyLine}>Telefon: 02173 / 9939835</Text>
+          <Text style={styles.companyLine}>Telefon: 02204 / 96 70 720</Text>
+          <Text style={styles.companyLine}>Mobil: 0221 / 677 744 67</Text>
+          <Text style={styles.companyLine}>E-Mail: mail@edvsamirae.de</Text>
+          <Text style={styles.companyLine}>Web: www.edvsamirae.de</Text>
+        </View>
+
+        <View style={[styles.headerBlock, styles.headerBlockWide]}>
+          <Text style={styles.companyLine}>Umsatzsteuer-ID: DE288598216</Text>
+          <Text style={styles.companyLine}>Steuer-Nr.: 135 5247 4113</Text>
+          <Text style={styles.companyLine}>
+            IBAN: DE62 1001 1001 2623 2363 37
+          </Text>
+          <Text style={styles.companyLine}>BIC: NTSBDEB1XXX</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function Signatures({
+  signatureEmployee,
+  signatureKunde,
+  employees,
+  customer,
+}: {
+  signatureEmployee: string | null;
+  signatureKunde: string | null;
+  employees: Employee[];
+  customer?: Customer | null;
+}) {
+  return (
+    <View style={styles.footerSignatures} wrap={false}>
+      <View style={styles.signatureBox}>
+        <Text style={styles.bold}>Ausgeführt durch:</Text>
+        <View style={styles.signatureImageWrapper}>
+          {signatureEmployee ? (
+            <Image src={signatureEmployee} style={styles.signatureImage} />
+          ) : (
+            <Text style={styles.muted}></Text>
+          )}
+        </View>
+        <View style={styles.signatureLine} />
+        <Text>{employees?.[0]?.name || "Mitarbeiter"}</Text>
+      </View>
+
+      <View style={styles.signatureBox}>
+        <Text style={styles.bold}>Kunde:</Text>
+        <View style={styles.signatureImageWrapper}>
+          {signatureKunde ? (
+            <Image src={signatureKunde} style={styles.signatureImage} />
+          ) : (
+            <Text style={styles.muted}></Text>
+          )}
+        </View>
+        <View style={styles.signatureLine} />
+        <Text>
+          {customer ? `${customer.firstName} ${customer.lastName}` : "Kunde"}
+        </Text>
+      </View>
+    </View>
+  );
+}
 
 export default function ServiceReportPdf(props: Props) {
   const {
@@ -365,15 +456,15 @@ export default function ServiceReportPdf(props: Props) {
     extraBrutto,
     serviceBrutto,
   } = props;
+
   const {
     firstPart: orderDetailsFirstPart,
     secondPart: orderDetailsSecondPart,
-  } = splitOrderDetailsForPdf(orderDetails);
+  } = splitDetailsByParagraphs(orderDetails);
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* HEADER */}
         <View style={styles.headerRow}>
           <View style={styles.headerTopRow}>
             <View>
@@ -404,6 +495,7 @@ export default function ServiceReportPdf(props: Props) {
                 </View>
               )}
             </View>
+
             <View style={styles.titleLeft}>
               <Image src="/LOGO.png" style={styles.titleLogo} />
               <View style={styles.brandTextBlock}>
@@ -418,7 +510,6 @@ export default function ServiceReportPdf(props: Props) {
           </View>
         </View>
 
-        {/* TITLE */}
         <View style={styles.titleBlock}>
           <Text style={styles.title}>Servicebericht</Text>
           <Text>Arbeitsdatum: {arbeitsdatum}</Text>
@@ -426,7 +517,6 @@ export default function ServiceReportPdf(props: Props) {
           {kundenNr && <Text>Kunden Nr: {kundenNr}</Text>}
         </View>
 
-        {/* TABLE */}
         <View style={styles.table}>
           {ankunftText && ankunftRange && (
             <View style={styles.tableRow}>
@@ -529,9 +619,7 @@ export default function ServiceReportPdf(props: Props) {
           ) : null}
         </View>
 
-        {/* TOTALS */}
         <View style={styles.totals}>
-          {/* WORK */}
           <View style={styles.totalsRow}>
             <Text style={styles.ledgerText}>Nettobetrag (Arbeit)</Text>
             <Text style={styles.ledgerText}>{netto}</Text>
@@ -549,7 +637,6 @@ export default function ServiceReportPdf(props: Props) {
             </View>
           ) : null}
 
-          {/* EXTRAS */}
           {extraBrutto ? (
             <View style={[styles.totalsRow, { marginTop: 6 }]}>
               <Text style={styles.ledgerText}>Zusatzpositionen</Text>
@@ -557,23 +644,22 @@ export default function ServiceReportPdf(props: Props) {
             </View>
           ) : null}
 
-          {/* TOTAL */}
           <View style={[styles.totalsRow, styles.totalsSum]}>
             <Text style={[styles.ledgerText, styles.bold]}>Gesamtbetrag</Text>
             <Text style={[styles.ledgerText, styles.bold]}>{brutto}</Text>
           </View>
         </View>
 
-        {/* ORDER DETAILS (first page part) */}
         {orderDetailsFirstPart ? (
           <View style={styles.orderDetailsBlock}>
             <Text style={styles.orderDetailsTitle}>
               Ausführung der Arbeiten
             </Text>
             <Text style={styles.orderDetailsBody}>{orderDetailsFirstPart}</Text>
+
           </View>
         ) : null}
-
+        
 {orderDetailsSecondPart ? (
               <Text style={styles.continuationHint}>
                 Fortsetzung auf der nächsten Seite.
@@ -581,9 +667,27 @@ export default function ServiceReportPdf(props: Props) {
             ) : null}
       
 
-        {/* ORDER DETAILS (continued on next page to avoid signatures alone) */}
         {orderDetailsSecondPart ? (
-          <View break style={styles.orderDetailsBlock}>
+          <Text style={styles.continuationHint}>
+            Fortsetzung auf der nächsten Seite.
+          </Text>
+        ) : null}
+
+        {!orderDetailsSecondPart ? (
+          <Signatures
+            signatureEmployee={signatureEmployee}
+            signatureKunde={signatureKunde}
+            employees={employees}
+            customer={customer}
+          />
+        ) : null}
+
+        <ContactsFooter />
+      </Page>
+
+      {orderDetailsSecondPart ? (
+        <Page size="A4" style={styles.page}>
+          <View style={styles.orderDetailsBlock}>
             <Text style={styles.orderDetailsTitle}>
               Ausführung der Arbeiten (Fortsetzung)
             </Text>
@@ -591,77 +695,17 @@ export default function ServiceReportPdf(props: Props) {
               {orderDetailsSecondPart}
             </Text>
           </View>
-        ) : null}
 
-        {/* SIGNATURES */}
-        <View style={styles.footerSignatures} wrap={false}>
-          <View style={styles.signatureBox}>
-            <Text style={styles.bold}>Ausgeführt durch:</Text>
-            <View style={styles.signatureImageWrapper}>
-              {signatureEmployee ? (
-                <Image src={signatureEmployee} style={styles.signatureImage} />
-              ) : (
-                <Text style={styles.muted}></Text>
-              )}
-            </View>
-            <View style={styles.signatureLine} />
-            <Text>{employees?.[0]?.name || "Mitarbeiter"}</Text>
-          </View>
+          <Signatures
+            signatureEmployee={signatureEmployee}
+            signatureKunde={signatureKunde}
+            employees={employees}
+            customer={customer}
+         />
 
-          <View style={styles.signatureBox}>
-            <Text style={styles.bold}>Kunde:</Text>
-            <View style={styles.signatureImageWrapper}>
-              {signatureKunde ? (
-                <Image src={signatureKunde} style={styles.signatureImage} />
-              ) : (
-                <Text style={styles.muted}></Text>
-              )}
-            </View>
-            <View style={styles.signatureLine} />
-            <Text>
-              {customer
-                ? `${customer.firstName} ${customer.lastName}`
-                : "Kunde"}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.contactsFooter} fixed>
-          <View style={styles.headerDivider} />
-          <View style={[styles.headerBlocksRow, styles.contactsContent]}>
-            <View style={styles.headerBlock}>
-              <Text style={styles.blockTitle}>Standort Monheim:</Text>
-              <Text style={styles.companyLine}>EDV-SERVICE Samirae</Text>
-              <Text style={styles.companyLine}>Frank Samirae</Text>
-              <Text style={styles.companyLine}>Franz-Boehm-Str. 3</Text>
-              <Text style={styles.companyLine}>40789 Monheim</Text>
-            </View>
-            <View style={styles.headerBlock}>
-              <Text style={styles.blockTitle}>Standort Bergisch Gladbach:</Text>
-              <Text style={styles.companyLine}>EDV-SERVICE Samirae</Text>
-              <Text style={styles.companyLine}>Frank Samirae</Text>
-              <Text style={styles.companyLine}>Schloßstrasse 33</Text>
-              <Text style={styles.companyLine}>51429 Bergisch Gladbach</Text>
-            </View>
-            <View style={styles.headerBlock}>
-              <Text style={styles.companyLine}>Telefon: 02173 / 9939835</Text>
-              <Text style={styles.companyLine}>Telefon: 02204 / 96 70 720</Text>
-              <Text style={styles.companyLine}>Mobil: 0221 / 677 744 67</Text>
-              <Text style={styles.companyLine}>E-Mail: mail@edvsamirae.de</Text>
-              <Text style={styles.companyLine}>Web: www.edvsamirae.de</Text>
-            </View>
-            <View style={[styles.headerBlock, styles.headerBlockWide]}>
-              <Text style={styles.companyLine}>
-                Umsatzsteuer-ID: DE288598216
-              </Text>
-              <Text style={styles.companyLine}>Steuer-Nr.: 135 5247 4113</Text>
-              <Text style={styles.companyLine}>
-                IBAN: DE62 1001 1001 2623 2363 37
-              </Text>
-              <Text style={styles.companyLine}>BIC: NTSBDEB1XXX</Text>
-            </View>
-          </View>
-        </View>
-      </Page>
+          <ContactsFooter />
+        </Page>
+      ) : null}
     </Document>
   );
 }

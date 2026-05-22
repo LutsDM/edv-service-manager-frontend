@@ -5,14 +5,15 @@ import { Report } from "@/app/types/report"
 type ReportSummaryBlockProps = {
   report: Report
   includeAbfahrt: boolean
+  includeAnkunft: boolean
   employeeCount: number
-  /** Сумма только по формуле: (Ankunft + Arbeitszeit + Abfahrt) × Stundensatz × Mitarbeiteranzahl, без доп. позиций */
   serviceBrutto: number
 }
 
 export default function ReportSummaryBlock({
   report,
   includeAbfahrt,
+  includeAnkunft,
   employeeCount,
   serviceBrutto,
 }: ReportSummaryBlockProps) {
@@ -36,10 +37,13 @@ export default function ReportSummaryBlock({
         Bericht
       </div>
 
-      <ReportRow
-        label="Ankunftszeit"
-        value={formatDuration(report.ankunftzeit)}
-      />
+
+      {includeAnkunft && (
+        <ReportRow
+          label="Ankunftszeit"
+          value={formatDuration(report.ankunftzeit)}
+        />
+      )}
 
       <ReportRow
         label="Arbeitszeit"

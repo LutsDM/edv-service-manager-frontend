@@ -9,6 +9,7 @@ type Params = {
   date: string
   auftragsnummer: string
   includeAbfahrt: boolean
+  includeAnkunft: boolean
   arbeitszeitRange: string
   abfahrtRange?: string
   ankunftRange?: string
@@ -35,6 +36,7 @@ export function usePdfDownload({
   date,
   auftragsnummer,
   includeAbfahrt,
+  includeAnkunft,
   ankunftRange,
   arbeitszeitRange,
   abfahrtRange,
@@ -65,7 +67,7 @@ export function usePdfDownload({
         arbeitsdatum={date}
         auftragsnummer={auftragsnummer}
         ankunftRange={ankunftRange}
-        ankunftText={formatDuration(report.ankunftzeit)}
+        ankunftText={includeAnkunft ? formatDuration(report.ankunftzeit) : undefined}
         arbeitszeitText={formatDuration(report.arbeitszeit)}
         arbeitszeitRange={arbeitszeitRange}
         abfahrtText={includeAbfahrt ? formatDuration(report.abfahrt) : undefined}

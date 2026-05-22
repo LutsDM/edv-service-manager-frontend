@@ -11,6 +11,7 @@ type Params = {
   // Ankunft
   ankunftVon: TimeParts
   ankunftBis: TimeParts
+  includeAnkunft: boolean
 
   // Arbeitszeit
   start: TimeParts
@@ -31,11 +32,12 @@ export function useTimeRanges({
   abfahrtVon,
   abfahrtBis,
   includeAbfahrt,
+  includeAnkunft,
 }: Params) {
   const ankunftRange =
-    report
+    report && includeAnkunft
       ? `${format(ankunftVon)} bis ${format(ankunftBis)}`
-      : ""
+      : undefined
 
   const arbeitszeitRange =
     report
@@ -46,10 +48,11 @@ export function useTimeRanges({
     report && includeAbfahrt
       ? `${format(abfahrtVon)} bis ${format(abfahrtBis)}`
       : undefined
+      
 
   return {
     ankunftRange,
     arbeitszeitRange,
-    abfahrtRange,
+    abfahrtRange,        
   }
 }
