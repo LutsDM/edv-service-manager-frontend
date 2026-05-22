@@ -657,12 +657,13 @@ export default function ServiceReportPdf(props: Props) {
             </Text>
             <Text style={styles.orderDetailsBody}>{orderDetailsFirstPart}</Text>
 
-            {orderDetailsSecondPart ? (
-              <Text style={styles.continuationHint}>
-                Fortsetzung auf der nächsten Seite.
-              </Text>
-            ) : null}
           </View>
+        ) : null}
+        
+        {orderDetailsSecondPart ? (
+          <Text style={styles.continuationHint}>
+            Fortsetzung auf der nächsten Seite.
+          </Text>
         ) : null}
 
         {!orderDetailsSecondPart ? (
