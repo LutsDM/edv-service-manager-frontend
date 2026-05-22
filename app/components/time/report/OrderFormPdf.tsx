@@ -386,7 +386,7 @@ function FooterWithSignatures({
               {signatureEmployee ? (
                 <Image src={signatureEmployee} style={styles.signatureImage} />
               ) : (
-                <Text style={styles.muted}>Bitte unterschreiben</Text>
+                <Text style={styles.muted}></Text>
               )}
             </View>
 
@@ -402,7 +402,7 @@ function FooterWithSignatures({
               {signatureKunde ? (
                 <Image src={signatureKunde} style={styles.signatureImage} />
               ) : (
-                <Text style={styles.muted}>Bitte unterschreiben</Text>
+                <Text style={styles.muted}></Text>
               )}
             </View>
 
