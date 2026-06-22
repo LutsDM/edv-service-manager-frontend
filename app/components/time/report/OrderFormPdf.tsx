@@ -17,6 +17,7 @@ import {
 } from "./orderFormAgbContent";
 
 type OrderFormPdfProps = {
+  diagnosis: boolean
   arbeitsdatum: string;
   auftragsnummer: string;
   kundenNr?: string;
@@ -422,6 +423,7 @@ function FooterWithSignatures({
 
 export default function OrderFormPdf(props: OrderFormPdfProps) {
   const {
+    diagnosis,
     arbeitsdatum,
     auftragsnummer,
     kundenNr,

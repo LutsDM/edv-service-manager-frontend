@@ -79,6 +79,7 @@ export default function TimeCalculator() {
   );
 
   const [price, setPrice] = useState<string>("95");
+  const [includeDiagnosis, setIncludeDiagnosis] = useState(false);
 
   /* ------------------------------------------------------------------
    * UI-level error (not business validation)
@@ -196,8 +197,7 @@ export default function TimeCalculator() {
   const [isHydrated, setIsHydrated] = useState(false);
 
   /* ------------------------------------------------------------------
-   * Form fingerprint: при изменении данных формы сбрасываем подписи
-   * ------------------------------------------------------------------ */
+   * Form fingerprint  * ------------------------------------------------------------------ */
   const formFingerprint = useMemo(
     () =>
       JSON.stringify({
@@ -531,6 +531,7 @@ export default function TimeCalculator() {
    * PDF download: Auftragsformular (uses signatures.auftrag)
    * ------------------------------------------------------------------ */
   const downloadOrderFormPdf = useOrderFormPdfDownload({
+    includeDiagnosis,
     date,
     auftragsnummer,
     preisProStunde: `${price.replace(".", ",")} €`,
@@ -600,6 +601,8 @@ export default function TimeCalculator() {
 
           {/* Header (date, order number, price) */}
           <HeaderBlock
+            diagnosis={includeDiagnosis}
+            onDiagnosisChange={setIncludeDiagnosis}
             date={date}
             auftragsnummer={orderSuffix}
             onAuftragsnummerChange={setOrderSuffix}
@@ -827,6 +830,7 @@ export default function TimeCalculator() {
             onDownloadPdf={downloadOrderFormPdf}
           >
             <OrderFormReport
+              diagnose={includeDiagnosis}
               arbeitsdatum={date}
               auftragsnummer={auftragsnummer}
               preisProStunde={`${price.replace(".", ",")} €`}

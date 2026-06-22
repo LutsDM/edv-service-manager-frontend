@@ -3,6 +3,7 @@ import { Customer } from "@/app/types/customer";
 import { LineItem } from "@/app/types/lineItem";
 
 type Params = {
+  includeDiagnosis: boolean;
   date: string;
   auftragsnummer: string;
   preisProStunde: string;
@@ -22,6 +23,7 @@ const formatEuro = (value: number) =>
   `${value.toFixed(2).replace(".", ",")} €`;
 
 export function useOrderFormPdfDownload({
+  includeDiagnosis,
   date,
   auftragsnummer,
   preisProStunde,
@@ -45,6 +47,7 @@ export function useOrderFormPdfDownload({
 
     const blob = await pdf(
       <OrderFormPdf
+        diagnosis={includeDiagnosis}
         arbeitsdatum={date}
         auftragsnummer={auftragsnummer}
         preisProStunde={preisProStunde}

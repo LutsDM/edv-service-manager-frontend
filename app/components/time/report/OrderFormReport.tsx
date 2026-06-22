@@ -9,6 +9,7 @@ import {
 } from "./orderFormAgbContent";
 
 type OrderFormReportProps = {
+  diagnose: boolean;
   arbeitsdatum: string;
   auftragsnummer: string;
   kundenNr?: string;
@@ -26,6 +27,7 @@ type OrderFormReportProps = {
 };
 
 export default function OrderFormReport({
+  diagnose,
   arbeitsdatum,
   auftragsnummer,
   kundenNr,
@@ -61,7 +63,9 @@ export default function OrderFormReport({
                   {customer.postalCode} {customer.city}
                 </div>
                 {customer.phone && <div>Tel. {customer.phone}</div>}
-                {customer.mobilePhone && <div>Mobil: {customer.mobilePhone}</div>}
+                {customer.mobilePhone && (
+                  <div>Mobil: {customer.mobilePhone}</div>
+                )}
               </div>
             )}
             {auftragPasswort?.trim() ? (
@@ -87,20 +91,36 @@ export default function OrderFormReport({
         </div>
       </div>
 
-    <div className="mb-4 text-right text-sm leading-relaxed">
-          <strong className="text-lg font-bold block mb-1">Auftragsformular</strong>
-          Arbeitsdatum: {arbeitsdatum}<br />
-          Auftragsnummer: {auftragsnummer}<br />
-          {kundenNr && <>Kunden Nr: {kundenNr}<br /></>}
+      <div className="mb-4 text-right text-sm leading-relaxed">
+        <strong className="text-lg font-bold block mb-1">
+          Auftragsformular
+        </strong>
+        Arbeitsdatum: {arbeitsdatum}
+        <br />
+        Auftragsnummer: {auftragsnummer}
+        <br />
+        {kundenNr && (
+          <>
+            Kunden Nr: {kundenNr}
+            <br />
+          </>
+        )}
       </div>
 
       {/* Таблица как в Servicebericht (без блока времени) */}
       <table className="w-full border border-gray-300 mb-6 text-sm">
         <tbody>
-          <tr className="border border-gray-300">
-            <td className="p-1">Stundensatz</td>
-            <td className="p-1 text-right">{preisProStunde}</td>
-          </tr>
+          {diagnose ? (
+            <tr className="border border-gray-300">
+              <td className="p-1">Diagnose</td>
+              <td className="p-1 text-right">60 €</td>
+            </tr>
+          ) : (
+            <tr className="border border-gray-300">
+              <td className="p-1">Stundensatz</td>
+              <td className="p-1 text-right">{preisProStunde}</td>
+            </tr>
+          )}
           <tr className="border border-gray-300">
             <td className="p-1">Mitarbeiteranzahl</td>
             <td className="p-1 text-right">{mitarbeiterAnzahl}</td>
@@ -121,7 +141,9 @@ export default function OrderFormReport({
       {orderDetails?.trim() ? (
         <div className="mt-4 mb-6 rounded-lg border border-gray-300 bg-gray-50 p-4">
           <div className="text-sm font-bold text-gray-800">Auftragsdetails</div>
-          <div className="mt-2 whitespace-pre-wrap text-base">{orderDetails}</div>
+          <div className="mt-2 whitespace-pre-wrap text-base">
+            {orderDetails}
+          </div>
         </div>
       ) : null}
 
@@ -130,32 +152,33 @@ export default function OrderFormReport({
         <div className="w-full break-inside-avoid">
           <div className="mb-4 p-1 text-[10px] leading-snug text-gray-800">
             <strong className="mb-1 block font-bold">
-              Verbrauchererklärung über Beginn der Arbeiten vor Ablauf der Widerrufsfrist
+              Verbrauchererklärung über Beginn der Arbeiten vor Ablauf der
+              Widerrufsfrist
             </strong>
             <div>Hiermit bestätige ich (der Auftraggeber / Kunde):</div>
             <ol className="mt-1 list-decimal pl-4">
               <li>
                 Dass ich darüber belehrt wurde, dass mir ein 14-tägiges
-                Widerrufsrecht zusteht. Eine entsprechende Widerrufsbelehrung und ein
-                Muster-Widerrufsformular wurden mir ausgehändigt.
+                Widerrufsrecht zusteht. Eine entsprechende Widerrufsbelehrung
+                und ein Muster-Widerrufsformular wurden mir ausgehändigt.
               </li>
               <li>
-                Dass ich ausdrücklich zustimme, dass die beauftragten Arbeiten vor
-                Ablauf der Widerrufsfrist beginnen.
+                Dass ich ausdrücklich zustimme, dass die beauftragten Arbeiten
+                vor Ablauf der Widerrufsfrist beginnen.
               </li>
               <li>
                 Dass ich darüber in Kenntnis gesetzt wurde, dass ich mein
                 Widerrufsrecht bei vollständiger Vertragserfüllung verliere.
               </li>
               <li>
-                Dass ich für den Fall, dass ich vor vollständiger Vertragserfüllung
-                den Vertrag widerrufe, für die bis zum Widerruf erbrachten Leistungen
-                einen Wertersatz zu leisten habe.
+                Dass ich für den Fall, dass ich vor vollständiger
+                Vertragserfüllung den Vertrag widerrufe, für die bis zum
+                Widerruf erbrachten Leistungen einen Wertersatz zu leisten habe.
               </li>
             </ol>
           </div>
           <p className="mb-4 text-sm leading-snug text-gray-900">
-          Auftragserteilung. Es gelten unsere AGB siehe nächste Seite.
+            Auftragserteilung. Es gelten unsere AGB siehe nächste Seite.
           </p>
           <div className="grid grid-cols-2 gap-8 text-sm">
             <div className="text-center">
@@ -191,7 +214,9 @@ export default function OrderFormReport({
               </div>
               <div className="border-b border-gray-500 h-2 mb-2" />
               <div className="font-medium">
-                {customer ? `${customer.firstName} ${customer.lastName}` : "Kunde"}
+                {customer
+                  ? `${customer.firstName} ${customer.lastName}`
+                  : "Kunde"}
               </div>
             </div>
           </div>
@@ -224,7 +249,9 @@ export default function OrderFormReport({
           <div className="h-full">
             <div>Umsatzsteuer-ID: DE288598216</div>
             <div>Steuer-Nr.: 135 5247 4113</div>
-            <div className="whitespace-nowrap">IBAN: DE62 1001 1001 2623 2363 37</div>
+            <div className="whitespace-nowrap">
+              IBAN: DE62 1001 1001 2623 2363 37
+            </div>
             <div>BIC: NTSBDEB1XXX</div>
           </div>
         </div>
@@ -246,14 +273,12 @@ export default function OrderFormReport({
               <div
                 key={i}
                 className={
-                  line.bold
-                    ? "mt-3 font-bold first:mt-0 print:mt-2"
-                    : undefined
+                  line.bold ? "mt-3 font-bold first:mt-0 print:mt-2" : undefined
                 }
               >
                 {line.text}
               </div>
-            )
+            ),
           )}
         </div>
       </section>
