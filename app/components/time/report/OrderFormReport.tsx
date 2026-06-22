@@ -7,9 +7,10 @@ import {
   ORDER_FORM_AGB_TITLE,
   parseOrderFormAgbLines,
 } from "./orderFormAgbContent";
+import { DIAGNOSIS_FLAT_BRUTTO_EUR } from "../lib/diagnosisConstants";
 
 type OrderFormReportProps = {
-  diagnose: boolean;
+  includeDiagnosis: boolean;
   arbeitsdatum: string;
   auftragsnummer: string;
   kundenNr?: string;
@@ -27,7 +28,7 @@ type OrderFormReportProps = {
 };
 
 export default function OrderFormReport({
-  diagnose,
+  includeDiagnosis,
   arbeitsdatum,
   auftragsnummer,
   kundenNr,
@@ -110,10 +111,10 @@ export default function OrderFormReport({
       {/* Таблица как в Servicebericht (без блока времени) */}
       <table className="w-full border border-gray-300 mb-6 text-sm">
         <tbody>
-          {diagnose ? (
+          {includeDiagnosis ? (
             <tr className="border border-gray-300">
               <td className="p-1">Diagnose</td>
-              <td className="p-1 text-right">60 €</td>
+              <td className="p-1 text-right">{DIAGNOSIS_FLAT_BRUTTO_EUR.toFixed(2).replace(".", ",")} €</td>
             </tr>
           ) : (
             <tr className="border border-gray-300">

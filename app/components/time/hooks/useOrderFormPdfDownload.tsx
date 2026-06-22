@@ -47,7 +47,7 @@ export function useOrderFormPdfDownload({
 
     const blob = await pdf(
       <OrderFormPdf
-        diagnosis={includeDiagnosis}
+        includeDiagnosis={includeDiagnosis}
         arbeitsdatum={date}
         auftragsnummer={auftragsnummer}
         preisProStunde={preisProStunde}

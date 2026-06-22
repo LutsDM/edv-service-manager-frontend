@@ -15,9 +15,10 @@ import {
   ORDER_FORM_AGB_TITLE,
   splitOrderFormAgbSectionsIntoColumns,
 } from "./orderFormAgbContent";
+import { DIAGNOSIS_FLAT_BRUTTO_EUR } from "../lib/diagnosisConstants";
 
 type OrderFormPdfProps = {
-  diagnosis: boolean
+  includeDiagnosis: boolean
   arbeitsdatum: string;
   auftragsnummer: string;
   kundenNr?: string;
@@ -423,7 +424,7 @@ function FooterWithSignatures({
 
 export default function OrderFormPdf(props: OrderFormPdfProps) {
   const {
-    diagnosis,
+    includeDiagnosis,
     arbeitsdatum,
     auftragsnummer,
     kundenNr,
@@ -507,10 +508,21 @@ export default function OrderFormPdf(props: OrderFormPdfProps) {
 
         <View style={styles.table}>
           <View style={styles.tableRow}>
-            <Text style={styles.tableCellLeft}>Stundensatz</Text>
-            <View style={styles.tableCellRight}>
-              <Text>{preisProStunde}</Text>
-            </View>
+            {includeDiagnosis ? (
+              <>
+                <Text style={styles.tableCellLeft}>Diagnose</Text>
+                <View style={styles.tableCellRight}>
+                  <Text>{DIAGNOSIS_FLAT_BRUTTO_EUR.toFixed(2).replace(".", ",")} €</Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.tableCellLeft}>Stundensatz</Text>
+                <View style={styles.tableCellRight}>
+                  <Text>{preisProStunde}</Text>
+                </View>
+              </>
+            )}
           </View>
 
           <View

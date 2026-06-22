@@ -256,6 +256,7 @@ export default function TimeCalculator() {
       date,
       orderSuffix,
       price,
+      includeDiagnosis,
       start,
       end,
       ankunftVon,
@@ -275,6 +276,7 @@ export default function TimeCalculator() {
       date,
       orderSuffix,
       price,
+      includeDiagnosis,
       start,
       end,
       ankunftVon,
@@ -321,6 +323,10 @@ export default function TimeCalculator() {
 
       if (parsed.ankunftVon) setAnkunftVon(parsed.ankunftVon);
       if (parsed.ankunftBis) setAnkunftBis(parsed.ankunftBis);
+
+      if (typeof parsed.includeDiagnosis === "boolean") {
+        setIncludeDiagnosis(parsed.includeDiagnosis);
+      }
 
       if (typeof parsed.includeAbfahrt === "boolean") {
         setIncludeAbfahrt(parsed.includeAbfahrt);
@@ -431,6 +437,7 @@ export default function TimeCalculator() {
     setAnkunftVon(getNowTime());
     setAnkunftBis(getNowTime());
 
+    setIncludeDiagnosis(false);
     setIncludeAbfahrt(false);
     setIncludeAnkuft(false);
     setAbfahrtVon(emptyTime);
@@ -481,6 +488,7 @@ export default function TimeCalculator() {
       report,
       price,
       employeeCount,
+      includeDiagnosis,
       extraBruttoAmount: lineItemsBrutto,
     });
 
@@ -601,7 +609,7 @@ export default function TimeCalculator() {
 
           {/* Header (date, order number, price) */}
           <HeaderBlock
-            diagnosis={includeDiagnosis}
+            includeDiagnosis={includeDiagnosis}
             onDiagnosisChange={setIncludeDiagnosis}
             date={date}
             auftragsnummer={orderSuffix}
@@ -830,7 +838,7 @@ export default function TimeCalculator() {
             onDownloadPdf={downloadOrderFormPdf}
           >
             <OrderFormReport
-              diagnose={includeDiagnosis}
+              includeDiagnosis={includeDiagnosis}
               arbeitsdatum={date}
               auftragsnummer={auftragsnummer}
               preisProStunde={`${price.replace(".", ",")} €`}

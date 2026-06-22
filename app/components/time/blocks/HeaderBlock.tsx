@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 type HeaderBlockProps = {
-  diagnosis: boolean;
+  includeDiagnosis: boolean;
   onDiagnosisChange: (value: boolean) => void;
   date: string;
   auftragsnummer: string;
@@ -12,7 +12,7 @@ type HeaderBlockProps = {
 };
 
 export default function HeaderBlock({
-  diagnosis,
+  includeDiagnosis,
   onDiagnosisChange,
   date,
   auftragsnummer,
@@ -116,7 +116,7 @@ export default function HeaderBlock({
 
       {/* Preis + Diagnose */}
       <div className="min-w-0 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-        <label className="block text-xs font-medium text-gray-600 mb-1 ">
+        <label className={`block text-xs font-medium mb-1 ${includeDiagnosis ? "text-gray-400" : "text-gray-600"}`}>
           Preis pro Stunde, €
         </label>
 
@@ -125,7 +125,14 @@ export default function HeaderBlock({
           inputMode="decimal"
           value={price}
           onChange={(e) => onPriceChange(e.target.value)}
-          className="h-9 w-full rounded-md border border-gray-300 px-2 text-sm bg-gray-50 text-gray-800 "
+          disabled={includeDiagnosis}
+          className={`
+            h-9 w-full rounded-md border px-2 text-sm transition-colors
+            ${includeDiagnosis
+              ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "border-gray-300 bg-gray-50 text-gray-800"
+            }
+          `}
         />
 
         <div className="mt-6 flex items-center justify-start border-t border-gray-100 pt-4 gap-4">
@@ -135,16 +142,16 @@ export default function HeaderBlock({
 
           <button
             type="button"
-            onClick={() => onDiagnosisChange(!diagnosis)}
+            onClick={() => onDiagnosisChange(!includeDiagnosis)}
             className={`
               relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-              ${diagnosis ? "bg-blue-600" : "bg-gray-300"}
+              ${includeDiagnosis ? "bg-blue-600" : "bg-gray-300"}
             `}
           >
             <span
               className={`
                 inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                ${diagnosis ? "translate-x-6" : "translate-x-1"}
+                ${includeDiagnosis ? "translate-x-6" : "translate-x-1"}
               `}
             />
           </button>
