@@ -8,6 +8,8 @@ type ReportSummaryBlockProps = {
   includeAnkunft: boolean
   employeeCount: number
   serviceBrutto: number
+
+  disabled?: boolean;
 }
 
 export default function ReportSummaryBlock({
@@ -16,6 +18,7 @@ export default function ReportSummaryBlock({
   includeAnkunft,
   employeeCount,
   serviceBrutto,
+  disabled = false,
 }: ReportSummaryBlockProps) {
 
   if (employeeCount === 0) {
@@ -32,7 +35,7 @@ export default function ReportSummaryBlock({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-2">
+    <div className={`bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-2 ${disabled ? "border-gray-100 opacity-40 pointer-events-none select-none" : "border-gray-200"}`}>
       <div className="text-xs uppercase tracking-wide text-gray-500">
         Bericht
       </div>

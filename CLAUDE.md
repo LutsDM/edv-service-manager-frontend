@@ -14,6 +14,25 @@ https://lutsdm.github.io/rechner/
 
 ---
 
+# Agent Behavior
+
+When asked to change code:
+
+- First analyze
+- Then create a plan
+- Then wait for approval if the change affects more than one file
+- Never rewrite large parts of the project automatically
+- All generated code, comments, TODOs, commit messages, and documentation must be written in English
+
+## Refactoring Rules
+
+Before refactoring:
+
+1. Explain the planned changes
+2. Explain why they are needed
+3. Do not modify unrelated code
+4. Keep public component APIs unchanged whenever possible
+
 # Frontend Architecture
 
 - Next.js (App Router)
@@ -32,7 +51,24 @@ https://lutsdm.github.io/rechner/
 - Avoid unnecessary re-renders
 - Use dynamic imports for heavy PDF modules
 
+## Tailwind Rules
+
+- Prefer Tailwind classes
+- Avoid inline styles
+- Reuse existing Tailwind patterns from neighboring components
+- Keep responsive behavior consistent with existing blocks
+
 ---
+
+## Spring Boot Standards
+
+- Java 21
+- Constructor injection only
+- No field injection
+- DTO mapping via MapStruct
+- Service layer contains business logic
+- Controllers only orchestrate requests
+- Repository layer only handles persistence
 
 # Backend Architecture
 
