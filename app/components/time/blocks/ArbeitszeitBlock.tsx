@@ -14,6 +14,8 @@ type Props = {
     hours: string[]
     minutes: string[]
   }
+
+  disabled?: boolean
 }
 
 export default function ArbeitszeitBlock({
@@ -23,9 +25,10 @@ export default function ArbeitszeitBlock({
   onStartChange,
   onEndChange,
   timeOptions,
+  disabled = false,
 }: Props) {
   return (
-    <TimeBlock title="Arbeitszeit">
+    <TimeBlock title="Arbeitszeit" disabled={disabled}>
       <div className="space-y-4">
         
         {/* Arbeitszeit */}

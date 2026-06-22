@@ -17,6 +17,8 @@ type AnkunftTimeBlockProps = {
     hours: string[];
     minutes: string[];
   };
+
+  disabled?: boolean;
 };
 
 export default function AnkunftTimeBlock({
@@ -28,9 +30,10 @@ export default function AnkunftTimeBlock({
   ankunftBis,
   onAnkunftVonChange,
   onAnkunftBisChange,
+  disabled = false,
 }: AnkunftTimeBlockProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-4">
+    <div className={`bg-white border rounded-lg p-4 shadow-sm space-y-4 transition-opacity ${disabled ? "border-gray-100 opacity-40 pointer-events-none select-none" : "border-gray-200"}`}>
       <label className="flex items-center gap-2 text-sm text-gray-800">
         <input
           type="checkbox"

@@ -516,6 +516,7 @@ export default function TimeCalculator() {
     auftragsnummer,
     includeAbfahrt,
     includeAnkunft,
+    includeDiagnosis,
     ankunftRange,
     arbeitszeitRange,
     abfahrtRange,
@@ -755,6 +756,7 @@ export default function TimeCalculator() {
             onAnkunftVonChange={setAnkunftVon}
             onAnkunftBisChange={setAnkunftBis}
             timeOptions={timeOptions}
+            disabled={includeDiagnosis}
           />
 
           {/* Working time */}
@@ -764,6 +766,7 @@ export default function TimeCalculator() {
             onStartChange={setStart}
             onEndChange={setEnd}
             timeOptions={timeOptions}
+            disabled={includeDiagnosis}
           />
 
           {/* Abfahrt Travel time */}
@@ -775,6 +778,7 @@ export default function TimeCalculator() {
             onAbfahrtVonChange={setAbfahrtVon}
             onAbfahrtBisChange={setAbfahrtBis}
             timeOptions={timeOptions}
+            disabled={includeDiagnosis}
           />
 
           {/* Validation errors */}
@@ -792,6 +796,7 @@ export default function TimeCalculator() {
               includeAnkunft={includeAnkunft}
               employeeCount={employeeCount}
               serviceBrutto={serviceBrutto}
+              disabled={includeDiagnosis}
             />
           )}
 
@@ -899,6 +904,7 @@ export default function TimeCalculator() {
               ankunftRange={ankunftRange}
               gesamtzeitText={formatDuration(report.gesamtzeit)}
               stundensatz={stundensatzText}
+              includeDiagnosis={includeDiagnosis}
               mitarbeiterAnzahl={employeeCount}
               netto={`${netto.toFixed(2)} €`}
               mwst={`${mwst.toFixed(2)} €`}

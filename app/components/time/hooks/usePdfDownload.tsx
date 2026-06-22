@@ -10,6 +10,7 @@ type Params = {
   auftragsnummer: string
   includeAbfahrt: boolean
   includeAnkunft: boolean
+  includeDiagnosis?: boolean
   arbeitszeitRange: string
   abfahrtRange?: string
   ankunftRange?: string
@@ -37,6 +38,7 @@ export function usePdfDownload({
   auftragsnummer,
   includeAbfahrt,
   includeAnkunft,
+  includeDiagnosis = false,
   ankunftRange,
   arbeitszeitRange,
   abfahrtRange,
@@ -74,6 +76,7 @@ export function usePdfDownload({
         abfahrtRange={abfahrtRange}
         gesamtzeitText={formatDuration(report.gesamtzeit)}
         stundensatz={stundensatzText}
+        includeDiagnosis={includeDiagnosis}
         mitarbeiterAnzahl={employeeCount}
         netto={formatEuro(netto)}
         mwst={formatEuro(mwst)}

@@ -3,6 +3,7 @@
 import { LineItem } from "@/app/types/lineItem";
 import { Employee } from "../lib/employees";
 import { Customer } from "@/app/types/customer";
+import { DIAGNOSIS_FLAT_BRUTTO_EUR } from "../lib/diagnosisConstants";
 
 type ServiceReportProps = {
   arbeitsdatum: string;
@@ -22,6 +23,7 @@ type ServiceReportProps = {
 
   stundensatz: string;
   mitarbeiterAnzahl: number;
+  includeDiagnosis?: boolean;
 
   netto: string;
   mwst: string;
@@ -55,6 +57,7 @@ export default function ServiceReport({
   gesamtzeitText,
   stundensatz,
   mitarbeiterAnzahl,
+  includeDiagnosis = false,
   netto,
   mwst,
   brutto,
@@ -145,7 +148,7 @@ export default function ServiceReport({
       {/* LEISTUNGEN */}
       <table className="w-full border border-gray-300 mb-6 text-sm">
         <tbody>
-          {ankunftText && ankunftRange && (
+          {!includeDiagnosis && ankunftText && ankunftRange && (
             <tr className="border border-gray-300">
               <td className="p-1">
                 Ankunft
@@ -155,18 +158,20 @@ export default function ServiceReport({
               <td className="p-1 text-right">{ankunftText}</td>
             </tr>
           )}
-          <tr className="border border-gray-300">
-            <td className="p-1">
-              Arbeitszeit
-              <br />
-              <span className="text-xs text-gray-500">
-                ({arbeitszeitRange})
-              </span>
-            </td>
-            <td className="p-1 text-right">{arbeitszeitText}</td>
-          </tr>
+          {!includeDiagnosis && (
+            <tr className="border border-gray-300">
+              <td className="p-1">
+                Arbeitszeit
+                <br />
+                <span className="text-xs text-gray-500">
+                  ({arbeitszeitRange})
+                </span>
+              </td>
+              <td className="p-1 text-right">{arbeitszeitText}</td>
+            </tr>
+          )}
 
-          {abfahrtText && abfahrtRange && (
+          {!includeDiagnosis && abfahrtText && abfahrtRange && (
             <tr className="border border-gray-300">
               <td className="p-1">
                 Abfahrt
@@ -177,14 +182,20 @@ export default function ServiceReport({
             </tr>
           )}
 
-          <tr className="border border-gray-300 font-bold">
-            <td className="p-1">Gesamtzeit</td>
-            <td className="p-1 text-right">{gesamtzeitText}</td>
-          </tr>
+          {!includeDiagnosis && (
+            <tr className="border border-gray-300 font-bold">
+              <td className="p-1">Gesamtzeit</td>
+              <td className="p-1 text-right">{gesamtzeitText}</td>
+            </tr>
+          )}
 
           <tr className="border border-gray-300">
-            <td className="p-1">Stundensatz</td>
-            <td className="p-1 text-right">{stundensatz}</td>
+            <td className="p-1">{includeDiagnosis ? "Diagnose" : "Stundensatz"}</td>
+            <td className="p-1 text-right">
+              {includeDiagnosis
+                ? `${DIAGNOSIS_FLAT_BRUTTO_EUR.toFixed(2).replace(".", ",")} €`
+                : stundensatz}
+            </td>
           </tr>
 
           <tr className="border border-gray-300">

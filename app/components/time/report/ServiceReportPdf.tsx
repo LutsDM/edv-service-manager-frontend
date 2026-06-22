@@ -11,6 +11,7 @@ import {
 import { Employee } from "../lib/employees";
 import { Customer } from "@/app/types/customer";
 import { LineItem } from "@/app/types/lineItem";
+import { DIAGNOSIS_FLAT_BRUTTO_EUR } from "../lib/diagnosisConstants";
 
 type Props = {
   arbeitsdatum: string;
@@ -30,6 +31,7 @@ type Props = {
 
   stundensatz: string;
   mitarbeiterAnzahl: number;
+  includeDiagnosis?: boolean;
 
   netto: string;
   mwst: string;
@@ -444,6 +446,7 @@ export default function ServiceReportPdf(props: Props) {
     gesamtzeitText,
     stundensatz,
     mitarbeiterAnzahl,
+    includeDiagnosis = false,
     netto,
     mwst,
     brutto,
@@ -518,7 +521,7 @@ export default function ServiceReportPdf(props: Props) {
         </View>
 
         <View style={styles.table}>
-          {ankunftText && ankunftRange && (
+          {!includeDiagnosis && ankunftText && ankunftRange && (
             <View style={styles.tableRow}>
               <View style={styles.tableCellLeft}>
                 <Text style={styles.ledgerText}>Ankunft</Text>
@@ -530,17 +533,19 @@ export default function ServiceReportPdf(props: Props) {
             </View>
           )}
 
-          <View style={styles.tableRow}>
-            <View style={styles.tableCellLeft}>
-              <Text style={styles.ledgerText}>Arbeitszeit</Text>
-              <Text style={styles.ledgerMuted}>({arbeitszeitRange})</Text>
+          {!includeDiagnosis && (
+            <View style={styles.tableRow}>
+              <View style={styles.tableCellLeft}>
+                <Text style={styles.ledgerText}>Arbeitszeit</Text>
+                <Text style={styles.ledgerMuted}>({arbeitszeitRange})</Text>
+              </View>
+              <View style={styles.tableCellRight}>
+                <Text style={styles.ledgerText}>{arbeitszeitText}</Text>
+              </View>
             </View>
-            <View style={styles.tableCellRight}>
-              <Text style={styles.ledgerText}>{arbeitszeitText}</Text>
-            </View>
-          </View>
+          )}
 
-          {abfahrtText && abfahrtRange && (
+          {!includeDiagnosis && abfahrtText && abfahrtRange && (
             <View style={styles.tableRow}>
               <View style={styles.tableCellLeft}>
                 <Text style={styles.ledgerText}>Abfahrt</Text>
@@ -552,25 +557,31 @@ export default function ServiceReportPdf(props: Props) {
             </View>
           )}
 
-          <View style={styles.tableRow}>
-            <Text
-              style={[styles.tableCellLeft, styles.ledgerText, styles.bold]}
-            >
-              Gesamtzeit
-            </Text>
-            <View style={styles.tableCellRight}>
-              <Text style={[styles.ledgerText, styles.bold]}>
-                {gesamtzeitText}
+          {!includeDiagnosis && (
+            <View style={styles.tableRow}>
+              <Text
+                style={[styles.tableCellLeft, styles.ledgerText, styles.bold]}
+              >
+                Gesamtzeit
               </Text>
+              <View style={styles.tableCellRight}>
+                <Text style={[styles.ledgerText, styles.bold]}>
+                  {gesamtzeitText}
+                </Text>
+              </View>
             </View>
-          </View>
+          )}
 
           <View style={styles.tableRow}>
             <Text style={[styles.tableCellLeft, styles.ledgerText]}>
-              Stundensatz
+              {includeDiagnosis ? "Diagnose" : "Stundensatz"}
             </Text>
             <View style={styles.tableCellRight}>
-              <Text style={styles.ledgerText}>{stundensatz}</Text>
+              <Text style={styles.ledgerText}>
+                {includeDiagnosis
+                  ? `${DIAGNOSIS_FLAT_BRUTTO_EUR.toFixed(2).replace(".", ",")} €`
+                  : stundensatz}
+              </Text>
             </View>
           </View>
 
