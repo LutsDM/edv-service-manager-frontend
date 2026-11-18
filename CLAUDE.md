@@ -9,8 +9,9 @@ Internal EDV service management system for creating:
 
 The application is designed to automate work tracking, reporting, PDF generation, and service documentation for a computer repair and IT service company.
 
-Deployment:
-https://lutsdm.github.io/rechner/
+Frontend demo (Vercel): https://edv-time-calculator.vercel.app
+
+The demo runs without the backend API. The backend is not deployed to production.
 
 ---
 
@@ -74,7 +75,9 @@ Before refactoring:
 
 - Spring Boot REST API
 - PostgreSQL as primary database
-- Flyway migrations required
+- Local development uses Hibernate `spring.jpa.hibernate.ddl-auto: update`. Flyway is not configured.
+- Do not add Flyway or SQL migration files unless migration tooling is explicitly part of the task.
+- Use controlled schema migrations in production rather than `ddl-auto: update`.
 - Layered architecture:
 
 ```text
@@ -84,22 +87,17 @@ Controller -> Service -> Repository
 - DTO pattern mandatory
 - No direct entity exposure
 - JWT authentication planned
-- JSON-based report persistence planned
+- The [backend `CLAUDE.md`](https://github.com/LutsDM/edv-service-manager-backend/blob/main/CLAUDE.md) is the reference for backend conventions.
 
 ---
 
 # Current Development Goals
 
-Current project priorities:
-
-1. Introduce PostgreSQL persistence
-2. Replace localStorage drafts with backend storage
-3. Implement Customer CRUD
-4. Implement Auftragsformular CRUD
-5. Implement Servicebericht CRUD
-6. Generate PDFs from database entities
-7. Add authentication system
-8. Build admin/report history system
+1. Verify existing CRUD endpoints against local PostgreSQL.
+2. Integrate the frontend with the API for customers, employees, orders, and reports. The current form saves its draft in browser `localStorage`.
+3. Preserve both document flows, signatures, and frontend PDF output when reloading saved records.
+4. Implement authentication and authorization before using real customer data.
+5. Add search and document history as needed.
 
 ---
 
@@ -132,6 +130,7 @@ npm run lint      # ESLint validation
 ```text
 app/
   components/
+    TimeCalculator.tsx  # Root client component
     time/
       blocks/           # Large UI sections (one block = one form section)
         ActionsBlock        # Action buttons
@@ -142,9 +141,10 @@ app/
         LineItemsModal      # Additional order positions
         OrderDetailsBlock   # Order details
         OrderDetailsModal   # Order details modal
-        PasswordModal       # Password protection
+        PasswordModal       # Order password field, not application authentication
         ReportSummaryBlock  # Final report summary
-        TravelTimeBlock     # Travel time (Abfahrt / Ankunft)
+        AnkunftTimeBlock    # Optional inbound travel interval
+        AbfahrtTimeBlock    # Optional outbound travel interval
 
       hooks/            # All business logic lives here
         useEmployeesSelection
@@ -173,8 +173,6 @@ app/
         TimeBlock
         TimeRow
 
-      TimeCalculator.tsx  # Root component
-
   types/                # Centralized TypeScript types
 
   globals.css
@@ -201,25 +199,22 @@ app/
 
 - Single hourly rate for both work time and travel time
 - Minute-precise calculation without intermediate rounding
-- Formula:
-
-```text
-(work minutes + travel minutes) × (hourly rate / 60)
-```
-
-- Only the final result may be rounded to 2 decimal places
+- Hourly service subtotal (gross): `(work minutes + enabled travel minutes) × (hourly rate / 60) × employee count`
+- `Nur Diagnose` replaces the hourly service subtotal with a fixed gross fee. Use `diagnosisConstants.ts` for the current value.
+- Additional line items are calculated separately in cents and added to the gross total.
+- Do not round intermediate hourly amounts. Format monetary output to two decimal places.
 
 ---
 
-## Time Validation (`useTimeCalculation`, `useTimeRange`)
+## Time Validation (`useTimeCalculation`)
 
 Validation rules:
 
 - Work start < Work end
-- Departure ≤ Arrival
-- Work start must not be earlier than Arrival
-- Departure must not be later than Work end
-- Travel time is optional and validated only if fields are filled
+- Each enabled travel interval must start at or before its end.
+- `Ankunft` (inbound travel) must end at or before work starts.
+- `Abfahrt` (outbound travel) must start at or after work ends.
+- Inbound and outbound travel are independent and validated only when enabled.
 
 ---
 
@@ -247,8 +242,7 @@ Validation rules:
 # Common Mistakes
 
 - Never round intermediate minute calculations
-- Travel validation must only run if travel fields exist
+- Travel validation must only run for enabled travel intervals
 - Do not place business logic inside components
 - After changing TypeScript types, verify all usages
 - Avoid duplicating hooks with overlapping responsibilities
-```
